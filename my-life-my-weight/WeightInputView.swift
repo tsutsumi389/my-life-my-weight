@@ -7,10 +7,32 @@ struct WeightInputView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
 
+    private var dateFormatter: DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy/MM/dd"
+        formatter.locale = Locale(identifier: "ja_JP")
+        return formatter
+    }
+
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("体重記録")) {
+                Section {
+                    VStack(spacing: 12) {
+                        Text(dateFormatter.string(from: selectedDate))
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+
+                        DatePicker("", selection: $selectedDate, displayedComponents: [.date])
+                            .datePickerStyle(.compact)
+                            .labelsHidden()
+                            .environment(\.locale, Locale(identifier: "ja_JP"))
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                Section {
                     HStack {
                         Text("体重")
                         Spacer()
@@ -19,8 +41,6 @@ struct WeightInputView: View {
                             .multilineTextAlignment(.trailing)
                         Text("kg")
                     }
-
-                    DatePicker("日付", selection: $selectedDate, displayedComponents: [.date])
                 }
 
 

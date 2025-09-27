@@ -70,7 +70,6 @@ struct WeightHistoryView: View {
                     )
                 }
             }
-            .navigationTitle("履歴")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showingEditSheet) {
                 if let entry = editingEntry {

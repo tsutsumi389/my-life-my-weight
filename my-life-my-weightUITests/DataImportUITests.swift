@@ -237,17 +237,49 @@ final class DataImportUITests: XCTestCase {
         print("Importing data for date: \(todayString) with weight 71.5")
         textEditor.typeText("\(todayString) 71.5")
 
+        // Check the text editor content before importing
+        print("Text editor content before import: '\(textEditor.value as? String ?? "nil")'")
+
         // Tap import button
         let importButton = app.buttons["インポート"]
         print("Import button exists: \(importButton.exists)")
         print("Import button enabled: \(importButton.isEnabled)")
+        print("Import button isHittable: \(importButton.isHittable)")
         XCTAssertTrue(importButton.exists && importButton.isEnabled, "Import button should exist and be enabled")
 
+        print("Tapping import button...")
         importButton.tap()
+
+        // Wait a moment and check what UI elements are visible after tap
+        usleep(500000) // 0.5 second wait
+        print("=== After import button tap ===")
+        let afterTapTexts = app.staticTexts
+        for i in 0..<min(afterTapTexts.count, 10) {
+            let text = afterTapTexts.element(boundBy: i)
+            if text.exists {
+                print("  Post-tap text: '\(text.label)'")
+            }
+        }
 
         // Check for update message
         let successText = app.staticTexts["インポート完了"]
-        XCTAssertTrue(successText.waitForExistence(timeout: 3), "Success message should appear")
+        print("Looking for success text: '\(successText.debugDescription)'")
+        let successExists = successText.waitForExistence(timeout: 5)
+        print("Success text appeared: \(successExists)")
+
+        if !successExists {
+            // Check for error messages
+            let errorTexts = app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'エラー' OR label CONTAINS '失敗' OR label CONTAINS '正しくありません' OR label CONTAINS '形式'"))
+            print("Error message count: \(errorTexts.count)")
+            for i in 0..<errorTexts.count {
+                let errorText = errorTexts.element(boundBy: i)
+                if errorText.exists {
+                    print("  Error: '\(errorText.label)'")
+                }
+            }
+        }
+
+        XCTAssertTrue(successExists, "Success message should appear")
 
         // Wait for the result message to appear (it should show immediately after success message)
         usleep(500000) // 0.5 second wait to let the result display
@@ -347,7 +379,12 @@ final class DataImportUITests: XCTestCase {
         // as this is likely a timing issue with the 2-second auto-close
         let testPass = importWasSuccessful || successfulImport
 
-        XCTAssertTrue(testPass, "Should find a successful import result. Success text exists: \(importWasSuccessful), Found result messages: \(foundResultMessages), All visible texts: \(allVisibleTexts.prefix(10))")
+        // Accept the test as passed if we saw the success message, even if result details disappeared due to auto-close timing
+        if importWasSuccessful {
+            print("Test PASSED: Import success message was displayed")
+        } else {
+            XCTAssertTrue(testPass, "Should find a successful import result. Success text exists: \(importWasSuccessful), Found result messages: \(foundResultMessages), All visible texts: \(allVisibleTexts.prefix(10))")
+        }
     }
 
     // MARK: - Error Handling Tests

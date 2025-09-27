@@ -6,6 +6,7 @@ struct WeightInputView: View {
     @State private var selectedDate = Date()
     @State private var showingAlert = false
     @State private var alertMessage = ""
+    @State private var alertTitle = ""
 
 
     var body: some View {
@@ -48,7 +49,7 @@ struct WeightInputView: View {
                     weightText = String(format: "%.1f", latestEntry.weight)
                 }
             }
-            .alert("エラー", isPresented: $showingAlert) {
+            .alert(alertTitle, isPresented: $showingAlert) {
                 Button("OK") { }
             } message: {
                 Text(alertMessage)
@@ -58,12 +59,12 @@ struct WeightInputView: View {
 
     private func saveWeight() {
         guard let weight = Double(weightText) else {
-            showAlert(message: "正しい数値を入力してください")
+            showAlert(title: "エラー", message: "正しい数値を入力してください")
             return
         }
 
         guard weight > 0 && weight <= 500 else {
-            showAlert(message: "体重は0kgより大きく、500kg以下で入力してください")
+            showAlert(title: "エラー", message: "体重は0kgより大きく、500kg以下で入力してください")
             return
         }
 
@@ -71,17 +72,18 @@ struct WeightInputView: View {
 
         if let existingEntry = weightStore.existingEntry(for: selectedDate) {
             weightStore.addEntry(entry)
-            showAlert(message: "記録を更新しました")
+            showAlert(title: "完了", message: "記録を更新しました")
         } else {
             weightStore.addEntry(entry)
-            showAlert(message: "体重を記録しました")
+            showAlert(title: "完了", message: "体重を記録しました")
         }
 
         weightText = ""
         selectedDate = Date()
     }
 
-    private func showAlert(message: String) {
+    private func showAlert(title: String, message: String) {
+        alertTitle = title
         alertMessage = message
         showingAlert = true
     }

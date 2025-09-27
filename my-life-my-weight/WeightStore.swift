@@ -100,4 +100,23 @@ class WeightStore: ObservableObject {
         entries.removeAll()
         saveEntries()
     }
+
+    func importEntries(_ newEntries: [WeightEntry]) -> (imported: Int, updated: Int) {
+        var importedCount = 0
+        var updatedCount = 0
+
+        for entry in newEntries {
+            if let existingIndex = entries.firstIndex(where: { $0.isSameDay(as: entry.date) }) {
+                entries[existingIndex] = entry
+                updatedCount += 1
+            } else {
+                entries.append(entry)
+                importedCount += 1
+            }
+        }
+
+        sortEntries()
+        saveEntries()
+        return (imported: importedCount, updated: updatedCount)
+    }
 }

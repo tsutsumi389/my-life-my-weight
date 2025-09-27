@@ -4,13 +4,46 @@ struct WeightHistoryView: View {
     @EnvironmentObject var weightStore: WeightStore
     @State private var showingEditSheet = false
     @State private var editingEntry: WeightEntry?
+    @State private var currentDate = Date()
+
+    private let calendar = Calendar.current
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy年M月"
+        return formatter
+    }()
 
     var body: some View {
         NavigationView {
-            Group {
+            VStack(spacing: 0) {
+                // Month navigation header
+                HStack {
+                    Button(action: previousMonth) {
+                        Image(systemName: "chevron.left")
+                            .font(.title2)
+                            .foregroundStyle(.blue)
+                    }
+
+                    Spacer()
+
+                    Text(dateFormatter.string(from: currentDate))
+                        .font(.title2)
+                        .fontWeight(.semibold)
+
+                    Spacer()
+
+                    Button(action: nextMonth) {
+                        Image(systemName: "chevron.right")
+                            .font(.title2)
+                            .foregroundStyle(.blue)
+                    }
+                }
+                .padding()
+                .background(Color(.systemBackground))
+
                 if weightStore.entries.isEmpty {
                     VStack(spacing: 20) {
-                        Image(systemName: "chart.line.uptrend.xyaxis")
+                        Image(systemName: "calendar")
                             .font(.system(size: 60))
                             .foregroundStyle(.secondary)
 
@@ -23,24 +56,22 @@ struct WeightHistoryView: View {
                             .multilineTextAlignment(.center)
                     }
                     .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    List {
-                        ForEach(weightStore.entries) { entry in
-                            WeightHistoryRow(entry: entry) {
+                    CalendarGridView(
+                        currentDate: currentDate,
+                        entries: weightStore.entries,
+                        onDateTap: { date in
+                            if let entry = weightStore.existingEntry(for: date) {
                                 editingEntry = entry
                                 showingEditSheet = true
                             }
                         }
-                        .onDelete(perform: weightStore.deleteEntry)
-                    }
+                    )
                 }
             }
             .navigationTitle("履歴")
-            .toolbar {
-                if !weightStore.entries.isEmpty {
-                    EditButton()
-                }
-            }
+            .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showingEditSheet) {
                 if let entry = editingEntry {
                     WeightEditView(entry: entry)
@@ -49,42 +80,128 @@ struct WeightHistoryView: View {
             }
         }
     }
+
+    private func previousMonth() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            currentDate = calendar.date(byAdding: .month, value: -1, to: currentDate) ?? currentDate
+        }
+    }
+
+    private func nextMonth() {
+        withAnimation(.easeInOut(duration: 0.3)) {
+            currentDate = calendar.date(byAdding: .month, value: 1, to: currentDate) ?? currentDate
+        }
+    }
 }
 
-struct WeightHistoryRow: View {
-    let entry: WeightEntry
-    let onEdit: () -> Void
+struct CalendarGridView: View {
+    let currentDate: Date
+    let entries: [WeightEntry]
+    let onDateTap: (Date) -> Void
+
+    private let calendar = Calendar.current
+    private let columns = Array(repeating: GridItem(.flexible()), count: 7)
+
+    private var monthDates: [Date] {
+        guard let monthRange = calendar.range(of: .day, in: .month, for: currentDate),
+              let firstOfMonth = calendar.dateInterval(of: .month, for: currentDate)?.start else {
+            return []
+        }
+
+        let firstWeekday = calendar.component(.weekday, from: firstOfMonth)
+        var dates: [Date] = []
+
+        // Add empty dates for days before the first day of the month
+        for _ in 1..<firstWeekday {
+            dates.append(Date.distantPast)
+        }
+
+        // Add all days of the month
+        for day in monthRange {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: firstOfMonth) {
+                dates.append(date)
+            }
+        }
+
+        return dates
+    }
+
+    private func entryForDate(_ date: Date) -> WeightEntry? {
+        entries.first { calendar.isDate($0.date, inSameDayAs: date) }
+    }
 
     var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(entry.formattedWeight)
-                        .font(.title2)
-                        .fontWeight(.semibold)
-
-                    Spacer()
-
-                    Text(entry.shortDateString)
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 8) {
+                // Weekday headers
+                ForEach(["日", "月", "火", "水", "木", "金", "土"], id: \.self) { weekday in
+                    Text(weekday)
                         .font(.caption)
+                        .fontWeight(.semibold)
                         .foregroundStyle(.secondary)
+                        .frame(height: 30)
                 }
 
-                Text(entry.formattedDate)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
+                // Calendar dates
+                ForEach(monthDates, id: \.timeIntervalSince1970) { date in
+                    CalendarDayView(
+                        date: date,
+                        entry: entryForDate(date),
+                        isCurrentMonth: date != Date.distantPast,
+                        onTap: { onDateTap(date) }
+                    )
+                }
             }
-
-            Spacer()
-
-            Button(action: onEdit) {
-                Image(systemName: "pencil")
-                    .foregroundStyle(.blue)
-            }
-            .buttonStyle(BorderlessButtonStyle())
+            .padding()
         }
-        .padding(.vertical, 4)
+    }
+}
+
+struct CalendarDayView: View {
+    let date: Date
+    let entry: WeightEntry?
+    let isCurrentMonth: Bool
+    let onTap: () -> Void
+
+    private let calendar = Calendar.current
+
+    var body: some View {
+        Button(action: entry != nil ? onTap : {}) {
+            VStack(spacing: 4) {
+                if isCurrentMonth {
+                    Text("\(calendar.component(.day, from: date))")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundStyle(entry != nil ? .primary : .secondary)
+
+                    if let entry = entry {
+                        Text(String(format: "%.1f", entry.weight))
+                            .font(.caption2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(.blue)
+                            )
+                    } else {
+                        Spacer()
+                            .frame(height: 16)
+                    }
+                } else {
+                    Spacer()
+                        .frame(height: 40)
+                }
+            }
+            .frame(width: 44, height: 44)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(entry != nil ? Color(.systemGray6) : Color.clear)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .disabled(entry == nil)
     }
 }
 

@@ -216,11 +216,10 @@ final class DataImportUITests: XCTestCase {
         let importSheet = app.navigationBars["データインポート"]
         if !importSheet.exists {
             print("ERROR: Not on import sheet. Current UI elements:")
-            let allTexts = app.staticTexts
-            for i in 0..<min(allTexts.count, 10) {
-                let text = allTexts.element(boundBy: i)
+            let allTexts = app.staticTexts.allElementsBoundByIndex
+            for (i, text) in allTexts.prefix(10).enumerated() {
                 if text.exists {
-                    print("  Text: '\(text.label)'")
+                    print("  Text \(i): '\(text.label)'")
                 }
             }
             XCTFail("Should be on import sheet at this point")
@@ -253,11 +252,10 @@ final class DataImportUITests: XCTestCase {
         // Wait a moment and check what UI elements are visible after tap
         usleep(500000) // 0.5 second wait
         print("=== After import button tap ===")
-        let afterTapTexts = app.staticTexts
-        for i in 0..<min(afterTapTexts.count, 10) {
-            let text = afterTapTexts.element(boundBy: i)
+        let afterTapTexts = app.staticTexts.allElementsBoundByIndex
+        for (i, text) in afterTapTexts.prefix(10).enumerated() {
             if text.exists {
-                print("  Post-tap text: '\(text.label)'")
+                print("  Post-tap text \(i): '\(text.label)'")
             }
         }
 
@@ -271,8 +269,7 @@ final class DataImportUITests: XCTestCase {
             // Check for error messages
             let errorTexts = app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'エラー' OR label CONTAINS '失敗' OR label CONTAINS '正しくありません' OR label CONTAINS '形式'"))
             print("Error message count: \(errorTexts.count)")
-            for i in 0..<errorTexts.count {
-                let errorText = errorTexts.element(boundBy: i)
+            for errorText in errorTexts.allElementsBoundByIndex {
                 if errorText.exists {
                     print("  Error: '\(errorText.label)'")
                 }
@@ -294,8 +291,9 @@ final class DataImportUITests: XCTestCase {
         var allVisibleTexts: [String] = []
 
         // Safely iterate through elements and collect all visible text
-        for i in 0..<textCount {
-            let text = allTexts.element(boundBy: i)
+        // Use allElementsBoundByIndex to get actual accessible elements
+        let accessibleTexts = allTexts.allElementsBoundByIndex
+        for text in accessibleTexts {
             if text.exists {
                 let label = text.label
                 allVisibleTexts.append(label)
@@ -568,8 +566,7 @@ final class DataImportUITests: XCTestCase {
             print("Import sheet failed to appear. Checking current UI state...")
             let allNavBars = app.navigationBars
             print("Navigation bar count: \(allNavBars.count)")
-            for i in 0..<allNavBars.count {
-                let navBar = allNavBars.element(boundBy: i)
+            for (i, navBar) in allNavBars.allElementsBoundByIndex.enumerated() {
                 if navBar.exists {
                     print("  Nav bar \(i): \(navBar.identifier)")
                 }

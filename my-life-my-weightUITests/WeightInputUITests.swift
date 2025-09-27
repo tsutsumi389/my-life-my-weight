@@ -229,12 +229,10 @@ final class WeightInputUITests: XCTestCase {
         if !alertExists {
             // Debug: List all available elements
             print("Alert not found. Available static texts:")
-            let allTexts = app.staticTexts
-            let textCount = allTexts.count
-            for i in 0..<min(textCount, 10) { // Limit to first 10 elements
-                let text = allTexts.element(boundBy: i)
+            let allTexts = app.staticTexts.allElementsBoundByIndex
+            for (i, text) in allTexts.prefix(10).enumerated() {
                 if text.exists {
-                    print("- \(text.label)")
+                    print("- \(i): \(text.label)")
                 }
             }
 
@@ -254,10 +252,8 @@ final class WeightInputUITests: XCTestCase {
             if !completionText.exists {
                 // List all text elements in the alert
                 print("Alert text elements:")
-                let alertTexts = alert.staticTexts
-                let alertTextCount = alertTexts.count
-                for i in 0..<alertTextCount {
-                    let text = alertTexts.element(boundBy: i)
+                let alertTexts = alert.staticTexts.allElementsBoundByIndex
+                for text in alertTexts {
                     if text.exists {
                         print("- Alert text: '\(text.label)'")
                     }
@@ -275,10 +271,8 @@ final class WeightInputUITests: XCTestCase {
             if !okButton.exists {
                 // List all buttons in the alert
                 print("Alert button elements:")
-                let alertButtons = alert.buttons
-                let buttonCount = alertButtons.count
-                for i in 0..<buttonCount {
-                    let button = alertButtons.element(boundBy: i)
+                let alertButtons = alert.buttons.allElementsBoundByIndex
+                for button in alertButtons {
                     if button.exists {
                         print("- Alert button: '\(button.label)'")
                     }

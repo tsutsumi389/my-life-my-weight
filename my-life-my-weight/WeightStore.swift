@@ -5,10 +5,11 @@ import SwiftUI
 class WeightStore: ObservableObject {
     @Published var entries: [WeightEntry] = []
 
-    private let userDefaults = UserDefaults.standard
+    private let userDefaults: UserDefaults
     private let storageKey = "WeightEntries"
 
-    init() {
+    init(userDefaults: UserDefaults = .standard) {
+        self.userDefaults = userDefaults
         loadEntries()
     }
 

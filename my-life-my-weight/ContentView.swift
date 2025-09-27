@@ -8,14 +8,22 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject private var weightStore = WeightStore()
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        TabView {
+            WeightInputView()
+                .environmentObject(weightStore)
+                .tabItem {
+                    Label("記録", systemImage: "plus.circle")
+                }
+
+            WeightHistoryView()
+                .environmentObject(weightStore)
+                .tabItem {
+                    Label("履歴", systemImage: "list.bullet")
+                }
         }
-        .padding()
     }
 }
 

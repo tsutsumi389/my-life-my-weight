@@ -217,7 +217,8 @@ final class DataImportUITests: XCTestCase {
         if !importSheet.exists {
             print("ERROR: Not on import sheet. Current UI elements:")
             let allTexts = app.staticTexts.allElementsBoundByIndex
-            for (i, text) in allTexts.prefix(10).enumerated() {
+            let availableTexts = Array(allTexts.prefix(min(10, allTexts.count)))
+            for (i, text) in availableTexts.enumerated() {
                 if text.exists {
                     print("  Text \(i): '\(text.label)'")
                 }
@@ -253,7 +254,8 @@ final class DataImportUITests: XCTestCase {
         usleep(500000) // 0.5 second wait
         print("=== After import button tap ===")
         let afterTapTexts = app.staticTexts.allElementsBoundByIndex
-        for (i, text) in afterTapTexts.prefix(10).enumerated() {
+        let availableTexts = Array(afterTapTexts.prefix(min(10, afterTapTexts.count)))
+        for (i, text) in availableTexts.enumerated() {
             if text.exists {
                 print("  Post-tap text \(i): '\(text.label)'")
             }

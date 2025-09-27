@@ -286,4 +286,231 @@ struct WeightStoreTests {
         #expect(store.entries[1].weight == 71.0)
         #expect(store.entries[2].weight == 70.0)
     }
+
+    @Test func testImportEntriesWithNewEntries() {
+        let store = createTestStore()
+        let calendar = Calendar.current
+        let today = Date()
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+
+        let entry1 = WeightEntry(weight: 70.0, date: yesterday)
+        let entry2 = WeightEntry(weight: 71.0, date: today)
+        let newEntries = [entry1, entry2]
+
+        let result = store.importEntries(newEntries)
+
+        #expect(result.imported == 2)
+        #expect(result.updated == 0)
+        #expect(store.entries.count == 2)
+        #expect(store.entries[0].weight == 71.0)
+        #expect(store.entries[1].weight == 70.0)
+    }
+
+    @Test func testImportEntriesWithExistingEntries() {
+        let store = createTestStore()
+        let calendar = Calendar.current
+        let today = Date()
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+
+        store.addEntry(WeightEntry(weight: 70.0, date: yesterday))
+        store.addEntry(WeightEntry(weight: 71.0, date: today))
+
+        let updatedEntry1 = WeightEntry(weight: 69.5, date: yesterday)
+        let updatedEntry2 = WeightEntry(weight: 71.5, date: today)
+        let updateEntries = [updatedEntry1, updatedEntry2]
+
+        let result = store.importEntries(updateEntries)
+
+        #expect(result.imported == 0)
+        #expect(result.updated == 2)
+        #expect(store.entries.count == 2)
+        #expect(store.entries[0].weight == 71.5)
+        #expect(store.entries[1].weight == 69.5)
+    }
+
+    @Test func testImportEntriesMixedNewAndUpdate() {
+        let store = createTestStore()
+        let calendar = Calendar.current
+        let today = Date()
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        let dayBeforeYesterday = calendar.date(byAdding: .day, value: -2, to: today)!
+
+        store.addEntry(WeightEntry(weight: 70.0, date: yesterday))
+
+        let updateEntry = WeightEntry(weight: 69.5, date: yesterday)
+        let newEntry1 = WeightEntry(weight: 71.0, date: today)
+        let newEntry2 = WeightEntry(weight: 68.0, date: dayBeforeYesterday)
+        let mixedEntries = [updateEntry, newEntry1, newEntry2]
+
+        let result = store.importEntries(mixedEntries)
+
+        #expect(result.imported == 2)
+        #expect(result.updated == 1)
+        #expect(store.entries.count == 3)
+        #expect(store.entries[0].weight == 71.0)
+        #expect(store.entries[1].weight == 69.5)
+        #expect(store.entries[2].weight == 68.0)
+    }
+
+    @Test func testImportEntriesEmptyArray() {
+        let store = createTestStore()
+        store.addEntry(WeightEntry(weight: 70.0))
+
+        let result = store.importEntries([])
+
+        #expect(result.imported == 0)
+        #expect(result.updated == 0)
+        #expect(store.entries.count == 1)
+    }
+
+    @Test func testImportEntriesSortsCorrectly() {
+        let store = createTestStore()
+        let calendar = Calendar.current
+        let today = Date()
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
+        let dayBeforeYesterday = calendar.date(byAdding: .day, value: -2, to: today)!
+
+        let entry1 = WeightEntry(weight: 68.0, date: dayBeforeYesterday)
+        let entry2 = WeightEntry(weight: 71.0, date: today)
+        let entry3 = WeightEntry(weight: 70.0, date: yesterday)
+        let entriesInRandomOrder = [entry2, entry1, entry3]
+
+        let result = store.importEntries(entriesInRandomOrder)
+
+        #expect(result.imported == 3)
+        #expect(store.entries.count == 3)
+        #expect(store.entries[0].weight == 71.0)
+        #expect(store.entries[1].weight == 70.0)
+        #expect(store.entries[2].weight == 68.0)
+    }
+}
+
+struct DataImportTests {
+
+    func parseWeightEntry(from line: String) -> WeightEntry? {
+        let components = line.components(separatedBy: " ")
+        guard components.count == 2 else { return nil }
+
+        let dateString = components[0]
+        let weightString = components[1]
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy/MM/dd"
+
+        guard let date = dateFormatter.date(from: dateString),
+              let weight = Double(weightString) else {
+            return nil
+        }
+
+        return WeightEntry(weight: weight, date: date)
+    }
+
+    @Test func testParseValidWeightEntry() {
+        let validLine = "2024/01/15 65.2"
+        let entry = parseWeightEntry(from: validLine)
+
+        #expect(entry != nil)
+        #expect(entry?.weight == 65.2)
+
+        let calendar = Calendar.current
+        let expectedDate = calendar.date(from: DateComponents(year: 2024, month: 1, day: 15))!
+        #expect(Calendar.current.isDate(entry!.date, inSameDayAs: expectedDate))
+    }
+
+    @Test func testParseValidWeightEntryWithInteger() {
+        let validLine = "2024/12/25 70"
+        let entry = parseWeightEntry(from: validLine)
+
+        #expect(entry != nil)
+        #expect(entry?.weight == 70.0)
+
+        let calendar = Calendar.current
+        let expectedDate = calendar.date(from: DateComponents(year: 2024, month: 12, day: 25))!
+        #expect(Calendar.current.isDate(entry!.date, inSameDayAs: expectedDate))
+    }
+
+    @Test func testParseInvalidDateFormat() {
+        let invalidLines = [
+            "24/01/15 65.2",
+            "2024-01-15 65.2",
+            "2024/1/15 65.2",
+            "2024/01/5 65.2",
+            "invalid-date 65.2"
+        ]
+
+        for line in invalidLines {
+            let entry = parseWeightEntry(from: line)
+            #expect(entry == nil, "Should be nil for line: \(line)")
+        }
+    }
+
+    @Test func testParseInvalidWeightFormat() {
+        let invalidLines = [
+            "2024/01/15 invalid-weight",
+            "2024/01/15 65.2.3",
+            "2024/01/15 ",
+            "2024/01/15 65,2"
+        ]
+
+        for line in invalidLines {
+            let entry = parseWeightEntry(from: line)
+            #expect(entry == nil, "Should be nil for line: \(line)")
+        }
+    }
+
+    @Test func testParseInvalidLineFormat() {
+        let invalidLines = [
+            "2024/01/15",
+            "65.2",
+            "2024/01/15 65.2 extra",
+            "",
+            "   ",
+            "2024/01/15  65.2"
+        ]
+
+        for line in invalidLines {
+            let entry = parseWeightEntry(from: line)
+            #expect(entry == nil, "Should be nil for line: \(line)")
+        }
+    }
+
+    @Test func testParseMultipleValidEntries() {
+        let validLines = [
+            "2024/01/15 65.2",
+            "2024/01/16 64.8",
+            "2024/01/17 65.0",
+            "2024/01/18 64.5"
+        ]
+
+        let entries = validLines.compactMap { parseWeightEntry(from: $0) }
+
+        #expect(entries.count == 4)
+        #expect(entries[0].weight == 65.2)
+        #expect(entries[1].weight == 64.8)
+        #expect(entries[2].weight == 65.0)
+        #expect(entries[3].weight == 64.5)
+    }
+
+    @Test func testParseBoundaryValues() {
+        let boundaryLines = [
+            "2024/01/01 0.1",
+            "2024/12/31 999.9",
+            "2000/01/01 50.0",
+            "2099/12/31 100.0"
+        ]
+
+        for line in boundaryLines {
+            let entry = parseWeightEntry(from: line)
+            #expect(entry != nil, "Should not be nil for line: \(line)")
+        }
+    }
+
+    @Test func testParseWithLeadingTrailingSpaces() {
+        let lineWithSpaces = "  2024/01/15 65.2  "
+        let trimmedLine = lineWithSpaces.trimmingCharacters(in: .whitespacesAndNewlines)
+        let entry = parseWeightEntry(from: trimmedLine)
+
+        #expect(entry != nil)
+        #expect(entry?.weight == 65.2)
+    }
 }

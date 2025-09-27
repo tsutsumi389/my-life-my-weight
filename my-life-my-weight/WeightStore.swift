@@ -95,4 +95,9 @@ class WeightStore: ObservableObject {
             print("Failed to load entries: \(error)")
         }
     }
+
+    func deleteAllEntries() {
+        entries.removeAll()
+        saveEntries()
+    }
 }

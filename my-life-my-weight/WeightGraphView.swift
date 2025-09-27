@@ -73,10 +73,19 @@ struct WeightGraphView: View {
             VStack(spacing: 20) {
                 periodSelectionView
 
-                if sortedEntries.isEmpty {
-                    emptyStateView
-                } else {
-                    chartView
+                VStack {
+                    if !sortedEntries.isEmpty {
+                        Text("表示データ数: \(sortedEntries.count)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.bottom, 8)
+                    }
+
+                    if sortedEntries.isEmpty {
+                        emptyChartView
+                    } else {
+                        chartView
+                    }
                 }
             }
             .padding()
@@ -110,8 +119,76 @@ struct WeightGraphView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    private var emptyChartView: some View {
+        Chart {
+            // Empty chart with period-appropriate X axis
+        }
+        .chartXScale(domain: xAxisRange)
+        .chartXAxis {
+            AxisMarks(values: .automatic) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel {
+                    if let date = value.as(Date.self) {
+                        Text(formatDateForAxis(date))
+                            .font(.caption)
+                    }
+                }
+            }
+        }
+        .chartYAxis {
+            AxisMarks(values: [60, 70, 80, 90]) { value in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel {
+                    if let weight = value.as(Double.self) {
+                        Text(String(format: "%.0f", weight))
+                            .font(.caption)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .shadow(radius: 2)
+        .overlay(
+            VStack(spacing: 16) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 40))
+                    .foregroundColor(.gray)
+
+                Text("この期間にデータがありません")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+            }
+        )
+        .id(selectedPeriod)
+    }
+
+    private var xAxisRange: ClosedRange<Date> {
+        let now = Date()
+        let calendar = Calendar.current
+
+        switch selectedPeriod {
+        case .oneMonth:
+            let oneMonthAgo = calendar.date(byAdding: .month, value: -1, to: now) ?? now
+            return oneMonthAgo...now
+        case .oneYear:
+            let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+            return oneYearAgo...now
+        case .allTime:
+            if let earliestDate = weightStore.entries.map({ $0.date }).min() {
+                return earliestDate...now
+            } else {
+                let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: now) ?? now
+                return oneYearAgo...now
+            }
+        }
+    }
+
     private var chartView: some View {
-        Chart(sortedEntries) { entry in
+        Chart(sortedEntries, id: \.id) { entry in
             LineMark(
                 x: .value("日付", entry.date),
                 y: .value("体重", entry.weight)
@@ -127,6 +204,7 @@ struct WeightGraphView: View {
             .symbolSize(30)
         }
         .chartYScale(domain: yAxisRange)
+        .chartXScale(domain: xAxisRange)
         .chartXAxis {
             AxisMarks(values: .automatic) { value in
                 AxisGridLine()
@@ -155,6 +233,8 @@ struct WeightGraphView: View {
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(radius: 2)
+        .animation(.none, value: selectedPeriod)
+        .id(selectedPeriod)
     }
 
 

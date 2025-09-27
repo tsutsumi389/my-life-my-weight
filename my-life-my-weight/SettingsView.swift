@@ -22,7 +22,6 @@ struct SettingsView: View {
                     Text("この操作は元に戻すことができません。")
                 }
             }
-            .navigationTitle("設定")
         }
         .alert("全期間のデータを削除", isPresented: $showingDeleteConfirmation) {
             Button("キャンセル", role: .cancel) { }

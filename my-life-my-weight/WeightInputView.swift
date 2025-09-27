@@ -2,51 +2,55 @@ import SwiftUI
 
 struct WeightInputView: View {
     @EnvironmentObject var weightStore: WeightStore
-    @State private var weightText = ""
+    @State private var selectedWeight: Double = 60.0
     @State private var selectedDate = Date()
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var alertTitle = ""
+    @State private var hasAppeared = false
+
+    private let weightRange: ClosedRange<Double> = 30.0...200.0
+    private let weightStep: Double = 0.1
 
 
     var body: some View {
         NavigationView {
-            Form {
-                Section {
+            VStack(spacing: 50) {
+                Spacer()
+
+                VStack(spacing: 40) {
                     DatePicker("", selection: $selectedDate, displayedComponents: [.date])
                         .datePickerStyle(.compact)
                         .labelsHidden()
-                        .scaleEffect(1.2)
-                        .frame(maxWidth: .infinity)
+                        .scaleEffect(1.4)
                         .environment(\.locale, Locale(identifier: "ja_JP"))
-                        .padding(.vertical, 12)
+
+                    WeightPickerView(selectedWeight: $selectedWeight, range: weightRange)
                 }
 
-                Section {
-                    HStack {
-                        Text("体重")
-                        Spacer()
-                        TextField("0.0", text: $weightText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                        Text("kg")
-                    }
+                Spacer()
+
+                Button("保存") {
+                    saveWeight()
                 }
-
-
-                Section {
-                    Button("記録する") {
-                        saveWeight()
-                    }
-                    .frame(maxWidth: .infinity)
-                    .disabled(weightText.isEmpty)
-                }
-
+                .font(.title2)
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity)
+                .frame(height: 60)
+                .background(Color.accentColor)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .disabled(!isValidWeight)
+                .opacity(isValidWeight ? 1.0 : 0.6)
+                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 50)
             }
-            .navigationTitle("体重記録")
+            .navigationBarHidden(true)
             .onAppear {
-                if weightText.isEmpty, let latestEntry = weightStore.latestEntry {
-                    weightText = String(format: "%.1f", latestEntry.weight)
+                if !hasAppeared {
+                    setupInitialWeight()
+                    hasAppeared = true
                 }
             }
             .alert(alertTitle, isPresented: $showingAlert) {
@@ -57,18 +61,20 @@ struct WeightInputView: View {
         }
     }
 
+    private var isValidWeight: Bool {
+        selectedWeight >= weightRange.lowerBound && selectedWeight <= weightRange.upperBound
+    }
+
+    private func setupInitialWeight() {
+        if let latestEntry = weightStore.latestEntry {
+            selectedWeight = latestEntry.weight
+        } else {
+            selectedWeight = 60.0
+        }
+    }
+
     private func saveWeight() {
-        guard let weight = Double(weightText) else {
-            showAlert(title: "エラー", message: "正しい数値を入力してください")
-            return
-        }
-
-        guard weight > 0 && weight <= 500 else {
-            showAlert(title: "エラー", message: "体重は0kgより大きく、500kg以下で入力してください")
-            return
-        }
-
-        let entry = WeightEntry(weight: weight, date: selectedDate)
+        let entry = WeightEntry(weight: selectedWeight, date: selectedDate)
 
         if let existingEntry = weightStore.existingEntry(for: selectedDate) {
             weightStore.addEntry(entry)
@@ -78,7 +84,6 @@ struct WeightInputView: View {
             showAlert(title: "完了", message: "体重を記録しました")
         }
 
-        weightText = ""
         selectedDate = Date()
     }
 
@@ -89,7 +94,79 @@ struct WeightInputView: View {
     }
 }
 
+struct WeightPickerView: View {
+    @Binding var selectedWeight: Double
+    let range: ClosedRange<Double>
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Spacer()
+
+            Picker("", selection: Binding(
+                get: { Int(selectedWeight) },
+                set: { newValue in
+                    let decimal = selectedWeight.truncatingRemainder(dividingBy: 1)
+                    selectedWeight = Double(newValue) + decimal
+                }
+            )) {
+                ForEach(Int(range.lowerBound)...Int(range.upperBound), id: \.self) { value in
+                    Text("\(value)")
+                        .font(.largeTitle)
+                        .fontWeight(.medium)
+                        .tag(value)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(width: 100)
+            .clipped()
+
+            Text(".")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .padding(.horizontal, 12)
+
+            Picker("", selection: Binding(
+                get: { Int((selectedWeight * 10).rounded()) % 10 },
+                set: { newValue in
+                    let integerPart = Int(selectedWeight)
+                    selectedWeight = Double(integerPart) + Double(newValue) / 10.0
+                }
+            )) {
+                ForEach(0...9, id: \.self) { value in
+                    Text("\(value)")
+                        .font(.largeTitle)
+                        .fontWeight(.medium)
+                        .tag(value)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(width: 80)
+            .clipped()
+
+            Text("kg")
+                .font(.title)
+                .fontWeight(.medium)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 16)
+
+            Spacer()
+        }
+        .frame(height: 200)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemGray6))
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
+        )
+        .padding(.horizontal, 20)
+    }
+}
+
 #Preview {
-    WeightInputView()
-        .environmentObject(WeightStore())
+    let store = WeightStore()
+    store.entries = [
+        WeightEntry(weight: 65.5, date: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date())
+    ]
+
+    return WeightInputView()
+        .environmentObject(store)
 }

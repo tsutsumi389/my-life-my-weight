@@ -37,6 +37,11 @@ my-life-my-weight/
 - **App Entry Point**: `my_life_my_weightApp.swift` contains the main `@main` App struct
 - **UI Framework**: SwiftUI with iOS 26.0 deployment target
 - **Testing Framework**: Uses Swift Testing framework (not XCTest)
+- **Data Model**: `WeightEntry` struct with date normalization (stores only date, not time)
+- **Data Persistence**: `WeightStore` uses UserDefaults with JSON encoding for local storage
+- **UI Architecture**: Tab-based navigation with input and history views
+- **Data Flow**: Uses `@StateObject` and `@EnvironmentObject` for state management
+- **Date Handling**: Enforces one entry per day using `Calendar.current.startOfDay`
 - **Code Structure**: Simple SwiftUI app structure with ContentView as the main interface
 - **Bundle Identifier**: `jp.ttm.my-life-my-weight`
 - **Development Team**: NM566LR538

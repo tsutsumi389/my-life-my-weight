@@ -32,36 +32,6 @@ struct WeightInputView: View {
                     .disabled(weightText.isEmpty)
                 }
 
-                if let latestEntry = weightStore.latestEntry {
-                    Section(header: Text("最新記録")) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("体重")
-                                Spacer()
-                                Text(latestEntry.formattedWeight)
-                                    .fontWeight(.semibold)
-                            }
-
-                            HStack {
-                                Text("記録日付")
-                                Spacer()
-                                Text(latestEntry.formattedDate)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            if let difference = weightStore.weightDifference {
-                                HStack {
-                                    Text("前回との差")
-                                    Spacer()
-                                    Text(String(format: "%+.1f kg", difference))
-                                        .foregroundStyle(difference > 0 ? .red : difference < 0 ? .blue : .primary)
-                                        .fontWeight(.medium)
-                                }
-                            }
-
-                        }
-                    }
-                }
             }
             .navigationTitle("体重記録")
             .alert("エラー", isPresented: $showingAlert) {

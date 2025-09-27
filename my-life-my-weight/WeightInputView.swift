@@ -2,11 +2,15 @@ import SwiftUI
 
 struct WeightInputView: View {
     @EnvironmentObject var weightStore: WeightStore
-    @State private var weightText = ""
+    @State private var selectedWeight: Double = 60.0
     @State private var selectedDate = Date()
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var alertTitle = ""
+    @State private var hasAppeared = false
+
+    private let weightRange: ClosedRange<Double> = 30.0...200.0
+    private let weightStep: Double = 0.1
 
 
     var body: some View {
@@ -23,30 +27,34 @@ struct WeightInputView: View {
                 }
 
                 Section {
-                    HStack {
-                        Text("体重")
-                        Spacer()
-                        TextField("0.0", text: $weightText)
-                            .keyboardType(.decimalPad)
-                            .multilineTextAlignment(.trailing)
-                        Text("kg")
-                    }
+                    WeightPickerView(selectedWeight: $selectedWeight, range: weightRange)
+                        .padding(.vertical, 20)
                 }
 
 
                 Section {
-                    Button("記録する") {
+                    Button("保存") {
                         saveWeight()
                     }
+                    .font(.headline)
                     .frame(maxWidth: .infinity)
-                    .disabled(weightText.isEmpty)
+                    .frame(height: 50)
+                    .background(Color.accentColor)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .disabled(!isValidWeight)
+                    .opacity(isValidWeight ? 1.0 : 0.6)
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .padding(.horizontal)
 
             }
-            .navigationTitle("体重記録")
+            .navigationBarHidden(true)
             .onAppear {
-                if weightText.isEmpty, let latestEntry = weightStore.latestEntry {
-                    weightText = String(format: "%.1f", latestEntry.weight)
+                if !hasAppeared {
+                    setupInitialWeight()
+                    hasAppeared = true
                 }
             }
             .alert(alertTitle, isPresented: $showingAlert) {
@@ -57,18 +65,20 @@ struct WeightInputView: View {
         }
     }
 
+    private var isValidWeight: Bool {
+        selectedWeight >= weightRange.lowerBound && selectedWeight <= weightRange.upperBound
+    }
+
+    private func setupInitialWeight() {
+        if let latestEntry = weightStore.latestEntry {
+            selectedWeight = latestEntry.weight
+        } else {
+            selectedWeight = 60.0
+        }
+    }
+
     private func saveWeight() {
-        guard let weight = Double(weightText) else {
-            showAlert(title: "エラー", message: "正しい数値を入力してください")
-            return
-        }
-
-        guard weight > 0 && weight <= 500 else {
-            showAlert(title: "エラー", message: "体重は0kgより大きく、500kg以下で入力してください")
-            return
-        }
-
-        let entry = WeightEntry(weight: weight, date: selectedDate)
+        let entry = WeightEntry(weight: selectedWeight, date: selectedDate)
 
         if let existingEntry = weightStore.existingEntry(for: selectedDate) {
             weightStore.addEntry(entry)
@@ -78,7 +88,6 @@ struct WeightInputView: View {
             showAlert(title: "完了", message: "体重を記録しました")
         }
 
-        weightText = ""
         selectedDate = Date()
     }
 
@@ -89,7 +98,70 @@ struct WeightInputView: View {
     }
 }
 
+struct WeightPickerView: View {
+    @Binding var selectedWeight: Double
+    let range: ClosedRange<Double>
+
+    var body: some View {
+        HStack(spacing: 0) {
+            Picker("", selection: Binding(
+                get: { Int(selectedWeight) },
+                set: { newValue in
+                    let decimal = selectedWeight.truncatingRemainder(dividingBy: 1)
+                    selectedWeight = Double(newValue) + decimal
+                }
+            )) {
+                ForEach(Int(range.lowerBound)...Int(range.upperBound), id: \.self) { value in
+                    Text("\(value)")
+                        .font(.title2)
+                        .tag(value)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(width: 80)
+            .clipped()
+
+            Text(".")
+                .font(.title2)
+                .fontWeight(.semibold)
+                .padding(.horizontal, 8)
+
+            Picker("", selection: Binding(
+                get: { Int((selectedWeight * 10).rounded()) % 10 },
+                set: { newValue in
+                    let integerPart = Int(selectedWeight)
+                    selectedWeight = Double(integerPart) + Double(newValue) / 10.0
+                }
+            )) {
+                ForEach(0...9, id: \.self) { value in
+                    Text("\(value)")
+                        .font(.title2)
+                        .tag(value)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(width: 60)
+            .clipped()
+
+            Text("kg")
+                .font(.title2)
+                .fontWeight(.medium)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 8)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+        )
+    }
+}
+
 #Preview {
-    WeightInputView()
-        .environmentObject(WeightStore())
+    let store = WeightStore()
+    store.entries = [
+        WeightEntry(weight: 65.5, date: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date())
+    ]
+
+    return WeightInputView()
+        .environmentObject(store)
 }

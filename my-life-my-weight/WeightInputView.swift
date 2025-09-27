@@ -43,6 +43,11 @@ struct WeightInputView: View {
 
             }
             .navigationTitle("体重記録")
+            .onAppear {
+                if weightText.isEmpty, let latestEntry = weightStore.latestEntry {
+                    weightText = String(format: "%.1f", latestEntry.weight)
+                }
+            }
             .alert("エラー", isPresented: $showingAlert) {
                 Button("OK") { }
             } message: {

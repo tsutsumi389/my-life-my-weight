@@ -181,17 +181,5 @@ struct WeightGraphView: View {
 
 #Preview {
     WeightGraphView()
-        .environmentObject({
-            let store = WeightStore()
-            // Add some sample data for preview
-            let calendar = Calendar.current
-            for i in 0..<30 {
-                if let date = calendar.date(byAdding: .day, value: -i, to: Date()) {
-                    let weight = 70.0 + Double.random(in: -5...5)
-                    let entry = WeightEntry(weight: weight, date: date)
-                    _ = store.addEntry(entry)
-                }
-            }
-            return store
-        }())
+        .environmentObject(WeightStore())
 }

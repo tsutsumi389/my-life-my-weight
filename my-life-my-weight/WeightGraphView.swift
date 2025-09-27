@@ -73,19 +73,10 @@ struct WeightGraphView: View {
             VStack(spacing: 20) {
                 periodSelectionView
 
-                VStack {
-                    if !sortedEntries.isEmpty {
-                        Text("表示データ数: \(sortedEntries.count)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .padding(.bottom, 8)
-                    }
-
-                    if sortedEntries.isEmpty {
-                        emptyChartView
-                    } else {
-                        chartView
-                    }
+                if sortedEntries.isEmpty {
+                    emptyChartView
+                } else {
+                    chartView
                 }
             }
             .padding()

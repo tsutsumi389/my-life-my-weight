@@ -78,8 +78,6 @@ struct WeightGraphView: View {
                 } else {
                     chartView
                 }
-
-                Spacer()
             }
             .padding()
         }
@@ -153,7 +151,7 @@ struct WeightGraphView: View {
                 }
             }
         }
-        .frame(height: 300)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .shadow(radius: 2)

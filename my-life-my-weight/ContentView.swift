@@ -18,6 +18,12 @@ struct ContentView: View {
                     Label("記録", systemImage: "plus.circle")
                 }
 
+            WeightGraphView()
+                .environmentObject(weightStore)
+                .tabItem {
+                    Label("グラフ", systemImage: "chart.line.uptrend.xyaxis")
+                }
+
             WeightHistoryView()
                 .environmentObject(weightStore)
                 .tabItem {

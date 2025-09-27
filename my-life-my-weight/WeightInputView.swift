@@ -15,40 +15,36 @@ struct WeightInputView: View {
 
     var body: some View {
         NavigationView {
-            Form {
-                Section {
+            VStack(spacing: 50) {
+                Spacer()
+
+                VStack(spacing: 40) {
                     DatePicker("", selection: $selectedDate, displayedComponents: [.date])
                         .datePickerStyle(.compact)
                         .labelsHidden()
-                        .scaleEffect(1.2)
-                        .frame(maxWidth: .infinity)
+                        .scaleEffect(1.4)
                         .environment(\.locale, Locale(identifier: "ja_JP"))
-                        .padding(.vertical, 12)
-                }
 
-                Section {
                     WeightPickerView(selectedWeight: $selectedWeight, range: weightRange)
-                        .padding(.vertical, 20)
                 }
 
+                Spacer()
 
-                Section {
-                    Button("保存") {
-                        saveWeight()
-                    }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 50)
-                    .background(Color.accentColor)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-                    .disabled(!isValidWeight)
-                    .opacity(isValidWeight ? 1.0 : 0.6)
+                Button("保存") {
+                    saveWeight()
                 }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
-                .padding(.horizontal)
-
+                .font(.title2)
+                .fontWeight(.semibold)
+                .frame(maxWidth: .infinity)
+                .frame(height: 60)
+                .background(Color.accentColor)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .disabled(!isValidWeight)
+                .opacity(isValidWeight ? 1.0 : 0.6)
+                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 50)
             }
             .navigationBarHidden(true)
             .onAppear {
@@ -104,6 +100,8 @@ struct WeightPickerView: View {
 
     var body: some View {
         HStack(spacing: 0) {
+            Spacer()
+
             Picker("", selection: Binding(
                 get: { Int(selectedWeight) },
                 set: { newValue in
@@ -113,18 +111,19 @@ struct WeightPickerView: View {
             )) {
                 ForEach(Int(range.lowerBound)...Int(range.upperBound), id: \.self) { value in
                     Text("\(value)")
-                        .font(.title2)
+                        .font(.largeTitle)
+                        .fontWeight(.medium)
                         .tag(value)
                 }
             }
             .pickerStyle(.wheel)
-            .frame(width: 80)
+            .frame(width: 100)
             .clipped()
 
             Text(".")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .padding(.horizontal, 8)
+                .font(.largeTitle)
+                .fontWeight(.bold)
+                .padding(.horizontal, 12)
 
             Picker("", selection: Binding(
                 get: { Int((selectedWeight * 10).rounded()) % 10 },
@@ -135,24 +134,30 @@ struct WeightPickerView: View {
             )) {
                 ForEach(0...9, id: \.self) { value in
                     Text("\(value)")
-                        .font(.title2)
+                        .font(.largeTitle)
+                        .fontWeight(.medium)
                         .tag(value)
                 }
             }
             .pickerStyle(.wheel)
-            .frame(width: 60)
+            .frame(width: 80)
             .clipped()
 
             Text("kg")
-                .font(.title2)
+                .font(.title)
                 .fontWeight(.medium)
                 .foregroundStyle(.secondary)
-                .padding(.leading, 8)
+                .padding(.leading, 16)
+
+            Spacer()
         }
+        .frame(height: 200)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 20)
                 .fill(Color(.systemGray6))
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
+        .padding(.horizontal, 20)
     }
 }
 

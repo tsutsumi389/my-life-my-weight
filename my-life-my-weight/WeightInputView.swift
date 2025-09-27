@@ -7,29 +7,18 @@ struct WeightInputView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
 
-    private var dateFormatter: DateFormatter {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy/MM/dd"
-        formatter.locale = Locale(identifier: "ja_JP")
-        return formatter
-    }
 
     var body: some View {
         NavigationView {
             Form {
                 Section {
-                    VStack(spacing: 12) {
-                        Text(dateFormatter.string(from: selectedDate))
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity)
-
-                        DatePicker("", selection: $selectedDate, displayedComponents: [.date])
-                            .datePickerStyle(.compact)
-                            .labelsHidden()
-                            .environment(\.locale, Locale(identifier: "ja_JP"))
-                    }
-                    .padding(.vertical, 8)
+                    DatePicker("", selection: $selectedDate, displayedComponents: [.date])
+                        .datePickerStyle(.compact)
+                        .labelsHidden()
+                        .scaleEffect(1.2)
+                        .frame(maxWidth: .infinity)
+                        .environment(\.locale, Locale(identifier: "ja_JP"))
+                        .padding(.vertical, 12)
                 }
 
                 Section {

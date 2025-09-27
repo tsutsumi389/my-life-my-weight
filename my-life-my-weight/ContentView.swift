@@ -29,6 +29,12 @@ struct ContentView: View {
                 .tabItem {
                     Label("履歴", systemImage: "list.bullet")
                 }
+
+            SettingsView()
+                .environmentObject(weightStore)
+                .tabItem {
+                    Label("設定", systemImage: "gearshape")
+                }
         }
     }
 }

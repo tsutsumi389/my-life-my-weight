@@ -77,13 +77,11 @@ struct WeightGraphView: View {
                     emptyStateView
                 } else {
                     chartView
-                    statsView
                 }
 
                 Spacer()
             }
             .padding()
-            .navigationTitle("体重グラフ")
         }
     }
 
@@ -120,14 +118,14 @@ struct WeightGraphView: View {
                 x: .value("日付", entry.date),
                 y: .value("体重", entry.weight)
             )
-            .foregroundStyle(.blue)
+            .foregroundStyle(.green)
             .lineStyle(StrokeStyle(lineWidth: 2))
 
             PointMark(
                 x: .value("日付", entry.date),
                 y: .value("体重", entry.weight)
             )
-            .foregroundStyle(.blue)
+            .foregroundStyle(.green)
             .symbolSize(30)
         }
         .chartYScale(domain: yAxisRange)
@@ -161,37 +159,6 @@ struct WeightGraphView: View {
         .shadow(radius: 2)
     }
 
-    private var statsView: some View {
-        HStack(spacing: 20) {
-            StatCard(
-                title: "最新",
-                value: String(format: "%.1f kg", sortedEntries.last?.weight ?? 0),
-                icon: "scalemass"
-            )
-
-            if let change = weightChange {
-                StatCard(
-                    title: "変化",
-                    value: String(format: "%+.1f kg", change),
-                    icon: change >= 0 ? "arrow.up" : "arrow.down",
-                    valueColor: change >= 0 ? .red : .blue
-                )
-            }
-
-            StatCard(
-                title: "記録数",
-                value: "\(sortedEntries.count)回",
-                icon: "number"
-            )
-        }
-    }
-
-    private var weightChange: Double? {
-        guard sortedEntries.count >= 2 else { return nil }
-        let latest = sortedEntries.last!.weight
-        let first = sortedEntries.first!.weight
-        return latest - first
-    }
 
     private func formatDateForAxis(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -211,33 +178,6 @@ struct WeightGraphView: View {
     }
 }
 
-struct StatCard: View {
-    let title: String
-    let value: String
-    let icon: String
-    var valueColor: Color = .primary
-
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(.blue)
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-
-            Text(value)
-                .font(.headline)
-                .foregroundColor(valueColor)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(.systemGray6))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-}
 
 #Preview {
     WeightGraphView()

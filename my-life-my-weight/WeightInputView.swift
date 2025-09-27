@@ -70,12 +70,12 @@ struct WeightInputView: View {
         let entry = WeightEntry(weight: weight, date: selectedDate)
 
         if let existingEntry = weightStore.existingEntry(for: selectedDate) {
-            showAlert(message: "この日付には既に記録があります。記録を更新しました。")
+            weightStore.addEntry(entry)
+            showAlert(message: "記録を更新しました")
         } else {
+            weightStore.addEntry(entry)
             showAlert(message: "体重を記録しました")
         }
-
-        weightStore.addEntry(entry)
 
         weightText = ""
         selectedDate = Date()

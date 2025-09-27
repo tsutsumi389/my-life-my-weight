@@ -6,7 +6,6 @@ struct WeightEditView: View {
 
     @State private var weightText: String
     @State private var selectedDate: Date
-    @State private var note: String
     @State private var showingAlert = false
     @State private var alertMessage = ""
 
@@ -16,7 +15,6 @@ struct WeightEditView: View {
         self.entry = entry
         self._weightText = State(initialValue: String(format: "%.1f", entry.weight))
         self._selectedDate = State(initialValue: entry.date)
-        self._note = State(initialValue: entry.note)
     }
 
     var body: some View {
@@ -32,13 +30,9 @@ struct WeightEditView: View {
                         Text("kg")
                     }
 
-                    DatePicker("日時", selection: $selectedDate, displayedComponents: [.date, .hourAndMinute])
+                    DatePicker("日付", selection: $selectedDate, displayedComponents: [.date])
                 }
 
-                Section(header: Text("メモ（任意）")) {
-                    TextField("メモを入力", text: $note, axis: .vertical)
-                        .lineLimit(3...6)
-                }
 
                 Section {
                     Button("保存") {
@@ -88,10 +82,12 @@ struct WeightEditView: View {
         var updatedEntry = entry
         updatedEntry.weight = weight
         updatedEntry.date = selectedDate
-        updatedEntry.note = note
 
-        weightStore.updateEntry(updatedEntry)
-        showAlert(message: "記録を更新しました")
+        if weightStore.updateEntry(updatedEntry) {
+            showAlert(message: "記録を更新しました")
+        } else {
+            showAlert(message: "選択した日付には既に別の記録があります")
+        }
     }
 
     private func deleteEntry() {
@@ -106,7 +102,7 @@ struct WeightEditView: View {
 }
 
 #Preview {
-    let entry = WeightEntry(weight: 70.5, date: Date(), note: "朝食前")
+    let entry = WeightEntry(weight: 70.5, date: Date())
     return WeightEditView(entry: entry)
         .environmentObject(WeightStore())
 }

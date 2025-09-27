@@ -4,7 +4,6 @@ struct WeightInputView: View {
     @EnvironmentObject var weightStore: WeightStore
     @State private var weightText = ""
     @State private var selectedDate = Date()
-    @State private var note = ""
     @State private var showingAlert = false
     @State private var alertMessage = ""
 
@@ -21,13 +20,9 @@ struct WeightInputView: View {
                         Text("kg")
                     }
 
-                    DatePicker("日時", selection: $selectedDate, displayedComponents: [.date, .hourAndMinute])
+                    DatePicker("日付", selection: $selectedDate, displayedComponents: [.date])
                 }
 
-                Section(header: Text("メモ（任意）")) {
-                    TextField("メモを入力", text: $note, axis: .vertical)
-                        .lineLimit(3...6)
-                }
 
                 Section {
                     Button("記録する") {
@@ -48,7 +43,7 @@ struct WeightInputView: View {
                             }
 
                             HStack {
-                                Text("記録日時")
+                                Text("記録日付")
                                 Spacer()
                                 Text(latestEntry.formattedDate)
                                     .foregroundStyle(.secondary)
@@ -64,13 +59,6 @@ struct WeightInputView: View {
                                 }
                             }
 
-                            if !latestEntry.note.isEmpty {
-                                VStack(alignment: .leading) {
-                                    Text("メモ")
-                                    Text(latestEntry.note)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
                         }
                     }
                 }
@@ -95,14 +83,18 @@ struct WeightInputView: View {
             return
         }
 
-        let entry = WeightEntry(weight: weight, date: selectedDate, note: note)
+        let entry = WeightEntry(weight: weight, date: selectedDate)
+
+        if let existingEntry = weightStore.existingEntry(for: selectedDate) {
+            showAlert(message: "この日付には既に記録があります。記録を更新しました。")
+        } else {
+            showAlert(message: "体重を記録しました")
+        }
+
         weightStore.addEntry(entry)
 
         weightText = ""
-        note = ""
         selectedDate = Date()
-
-        showAlert(message: "体重を記録しました")
     }
 
     private func showAlert(message: String) {

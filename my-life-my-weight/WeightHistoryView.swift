@@ -74,13 +74,6 @@ struct WeightHistoryRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                if !entry.note.isEmpty {
-                    Text(entry.note)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
-                        .padding(.top, 2)
-                }
             }
 
             Spacer()
@@ -98,9 +91,9 @@ struct WeightHistoryRow: View {
 #Preview {
     let store = WeightStore()
     store.entries = [
-        WeightEntry(weight: 70.5, date: Date(), note: "朝食前"),
-        WeightEntry(weight: 71.2, date: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date(), note: ""),
-        WeightEntry(weight: 69.8, date: Calendar.current.date(byAdding: .day, value: -2, to: Date()) ?? Date(), note: "運動後")
+        WeightEntry(weight: 70.5, date: Date()),
+        WeightEntry(weight: 71.2, date: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()),
+        WeightEntry(weight: 69.8, date: Calendar.current.date(byAdding: .day, value: -2, to: Date()) ?? Date())
     ]
 
     return WeightHistoryView()

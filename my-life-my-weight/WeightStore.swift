@@ -12,18 +12,45 @@ class WeightStore: ObservableObject {
         loadEntries()
     }
 
-    func addEntry(_ entry: WeightEntry) {
-        entries.append(entry)
+    func addEntry(_ entry: WeightEntry) -> Bool {
+        // Check if entry for this date already exists
+        if let existingIndex = entries.firstIndex(where: { $0.isSameDay(as: entry.date) }) {
+            // Update existing entry for the same date
+            entries[existingIndex] = entry
+        } else {
+            // Add new entry
+            entries.append(entry)
+        }
         sortEntries()
         saveEntries()
+        return true
     }
 
-    func updateEntry(_ entry: WeightEntry) {
+    func updateEntry(_ entry: WeightEntry) -> Bool {
         if let index = entries.firstIndex(where: { $0.id == entry.id }) {
+            let originalDate = entries[index].date
+
+            // Check if changing to a date that already has an entry
+            if !Calendar.current.isDate(originalDate, inSameDayAs: entry.date) {
+                if entries.contains(where: { $0.id != entry.id && $0.isSameDay(as: entry.date) }) {
+                    return false // Cannot update to a date that already has an entry
+                }
+            }
+
             entries[index] = entry
             sortEntries()
             saveEntries()
+            return true
         }
+        return false
+    }
+
+    func canAddEntry(for date: Date) -> Bool {
+        return !entries.contains { $0.isSameDay(as: date) }
+    }
+
+    func existingEntry(for date: Date) -> WeightEntry? {
+        return entries.first { $0.isSameDay(as: date) }
     }
 
     func deleteEntry(_ entry: WeightEntry) {

@@ -12,7 +12,9 @@ xcuserdata/
 
 ## Compatibility with Xcode 3 and earlier (ignoring not required starting Xcode 4)
 build/
+**/build/
 DerivedData/
+**/DerivedData/
 *.moved-aside
 *.pbxuser
 !default.pbxuser
@@ -55,6 +57,7 @@ playground.xcworkspace
 # .swiftpm/xcode
 
 .build/
+**/.build/
 
 # CocoaPods
 #
@@ -73,10 +76,13 @@ playground.xcworkspace
 # Carthage/Checkouts
 
 Carthage/Build/
+**/Carthage/Build/
 
 # Accio dependency management
 Dependencies/
+**/Dependencies/
 .accio/
+**/.accio/
 
 # fastlane
 #
@@ -89,6 +95,9 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/test_output
 
 # Code Injection
 #
@@ -96,6 +105,7 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+**/iOSInjectionProject/
 
 # macOS
 .DS_Store

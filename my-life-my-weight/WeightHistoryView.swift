@@ -6,7 +6,14 @@ struct WeightHistoryView: View {
     @State private var editingEntry: WeightEntry?
     @State private var currentDate = Date()
 
+    // Callback for when a date is selected (for navigation to record tab)
+    let onDateSelected: ((Date, Double?) -> Void)?
+
     private let calendar = Calendar.current
+
+    init(onDateSelected: ((Date, Double?) -> Void)? = nil) {
+        self.onDateSelected = onDateSelected
+    }
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy年M月"
@@ -62,7 +69,13 @@ struct WeightHistoryView: View {
                         currentDate: currentDate,
                         entries: weightStore.entries,
                         onDateTap: { date in
-                            if let entry = weightStore.existingEntry(for: date) {
+                            let existingEntry = weightStore.existingEntry(for: date)
+
+                            if let onDateSelected = onDateSelected {
+                                // Navigate to record tab with selected date and weight
+                                onDateSelected(date, existingEntry?.weight)
+                            } else if let entry = existingEntry {
+                                // Fallback to edit sheet if no navigation callback
                                 editingEntry = entry
                                 showingEditSheet = true
                             }
@@ -165,7 +178,7 @@ struct CalendarDayView: View {
     private let calendar = Calendar.current
 
     var body: some View {
-        Button(action: entry != nil ? onTap : {}) {
+        Button(action: isCurrentMonth ? onTap : {}) {
             VStack(spacing: 4) {
                 if isCurrentMonth {
                     Text("\(calendar.component(.day, from: date))")
@@ -200,7 +213,7 @@ struct CalendarDayView: View {
             )
         }
         .buttonStyle(PlainButtonStyle())
-        .disabled(entry == nil)
+        .disabled(!isCurrentMonth)
     }
 }
 

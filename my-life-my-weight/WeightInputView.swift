@@ -7,10 +7,18 @@ struct WeightInputView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var alertTitle = ""
-    @State private var hasAppeared = false
+
+    // Parameters for setting date and weight from external sources (like calendar)
+    let initialDate: Date?
+    let initialWeight: Double?
 
     private let weightRange: ClosedRange<Double> = 30.0...200.0
     private let weightStep: Double = 0.1
+
+    init(initialDate: Date? = nil, initialWeight: Double? = nil) {
+        self.initialDate = initialDate
+        self.initialWeight = initialWeight
+    }
 
 
     var body: some View {
@@ -30,15 +38,17 @@ struct WeightInputView: View {
 
                 Spacer()
 
-                Button("保存") {
+                Button(action: {
                     saveWeight()
+                }) {
+                    Text("保存")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 60)
                 }
-                .font(.title2)
-                .fontWeight(.semibold)
-                .frame(maxWidth: .infinity)
-                .frame(height: 60)
                 .background(Color.accentColor)
-                .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .disabled(!isValidWeight)
                 .opacity(isValidWeight ? 1.0 : 0.6)
@@ -48,10 +58,7 @@ struct WeightInputView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
-                if !hasAppeared {
-                    setupInitialWeight()
-                    hasAppeared = true
-                }
+                setupInitialWeight()
             }
             .alert(alertTitle, isPresented: $showingAlert) {
                 Button("OK") { }
@@ -66,7 +73,18 @@ struct WeightInputView: View {
     }
 
     private func setupInitialWeight() {
-        if let latestEntry = weightStore.latestEntry {
+        // First, set the date if provided from external source (like calendar)
+        if let initialDate = initialDate {
+            selectedDate = initialDate
+        }
+
+        // Then set the weight: priority is initialWeight > existing entry for date > latest entry > default
+        if let initialWeight = initialWeight {
+            selectedWeight = initialWeight
+        } else if let initialDate = initialDate,
+                  let existingEntry = weightStore.existingEntry(for: initialDate) {
+            selectedWeight = existingEntry.weight
+        } else if let latestEntry = weightStore.latestEntry {
             selectedWeight = latestEntry.weight
         } else {
             selectedWeight = 60.0
@@ -84,7 +102,10 @@ struct WeightInputView: View {
             showAlert(title: "完了", message: "体重を記録しました")
         }
 
-        selectedDate = Date()
+        // Only reset date if not set from external source (like calendar)
+        if initialDate == nil {
+            selectedDate = Date()
+        }
     }
 
     private func showAlert(title: String, message: String) {
@@ -167,6 +188,6 @@ struct WeightPickerView: View {
         WeightEntry(weight: 65.5, date: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date())
     ]
 
-    return WeightInputView()
+    return WeightInputView(initialDate: nil, initialWeight: nil)
         .environmentObject(store)
 }

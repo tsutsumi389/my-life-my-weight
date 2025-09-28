@@ -561,3 +561,149 @@ struct DataImportTests {
         #expect(entry?.weight == 65.2)
     }
 }
+
+struct WeightInputViewTests {
+
+    @Test func testWeightInputViewInitWithoutParameters() {
+        let inputView = WeightInputView()
+
+        #expect(inputView.initialDate == nil)
+        #expect(inputView.initialWeight == nil)
+    }
+
+    @Test func testWeightInputViewInitWithDate() {
+        let testDate = Calendar.current.date(from: DateComponents(year: 2024, month: 1, day: 15))!
+        let inputView = WeightInputView(initialDate: testDate)
+
+        #expect(inputView.initialDate != nil)
+        #expect(Calendar.current.isDate(inputView.initialDate!, inSameDayAs: testDate))
+        #expect(inputView.initialWeight == nil)
+    }
+
+    @Test func testWeightInputViewInitWithWeight() {
+        let testWeight = 65.5
+        let inputView = WeightInputView(initialWeight: testWeight)
+
+        #expect(inputView.initialDate == nil)
+        #expect(inputView.initialWeight == testWeight)
+    }
+
+    @Test func testWeightInputViewInitWithDateAndWeight() {
+        let testDate = Calendar.current.date(from: DateComponents(year: 2024, month: 1, day: 15))!
+        let testWeight = 65.5
+        let inputView = WeightInputView(initialDate: testDate, initialWeight: testWeight)
+
+        #expect(inputView.initialDate != nil)
+        #expect(Calendar.current.isDate(inputView.initialDate!, inSameDayAs: testDate))
+        #expect(inputView.initialWeight == testWeight)
+    }
+}
+
+struct WeightHistoryViewTests {
+
+    @Test func testWeightHistoryViewInitWithoutCallback() {
+        let historyView = WeightHistoryView()
+
+        #expect(historyView.onDateSelected == nil)
+    }
+
+    @Test func testWeightHistoryViewInitWithCallback() {
+        var capturedDate: Date?
+        var capturedWeight: Double?
+
+        let callback: (Date, Double?) -> Void = { date, weight in
+            capturedDate = date
+            capturedWeight = weight
+        }
+
+        let historyView = WeightHistoryView(onDateSelected: callback)
+
+        #expect(historyView.onDateSelected != nil)
+
+        // Test callback functionality
+        let testDate = Date()
+        let testWeight = 70.5
+        historyView.onDateSelected?(testDate, testWeight)
+
+        #expect(capturedDate != nil)
+        #expect(Calendar.current.isDate(capturedDate!, inSameDayAs: testDate))
+        #expect(capturedWeight == testWeight)
+    }
+
+    @Test func testWeightHistoryViewCallbackWithNilWeight() {
+        var capturedDate: Date?
+        var capturedWeight: Double?
+
+        let callback: (Date, Double?) -> Void = { date, weight in
+            capturedDate = date
+            capturedWeight = weight
+        }
+
+        let historyView = WeightHistoryView(onDateSelected: callback)
+
+        let testDate = Date()
+        historyView.onDateSelected?(testDate, nil)
+
+        #expect(capturedDate != nil)
+        #expect(Calendar.current.isDate(capturedDate!, inSameDayAs: testDate))
+        #expect(capturedWeight == nil)
+    }
+}
+
+struct CalendarNavigationTests {
+
+    @Test func testCalendarToRecordTabNavigation() {
+        // Test data preparation
+        let testDate = Calendar.current.date(from: DateComponents(year: 2024, month: 1, day: 15))!
+        let testWeight = 65.5
+
+        // Test that callback parameters are correctly passed
+        var receivedDate: Date?
+        var receivedWeight: Double?
+
+        let onDateSelected: (Date, Double?) -> Void = { date, weight in
+            receivedDate = date
+            receivedWeight = weight
+        }
+
+        // Simulate calendar date selection
+        onDateSelected(testDate, testWeight)
+
+        #expect(receivedDate != nil)
+        #expect(Calendar.current.isDate(receivedDate!, inSameDayAs: testDate))
+        #expect(receivedWeight == testWeight)
+
+        // Test WeightInputView initialization with received parameters
+        let inputView = WeightInputView(initialDate: receivedDate, initialWeight: receivedWeight)
+
+        #expect(inputView.initialDate != nil)
+        #expect(Calendar.current.isDate(inputView.initialDate!, inSameDayAs: testDate))
+        #expect(inputView.initialWeight == testWeight)
+    }
+
+    @Test func testCalendarToRecordTabNavigationWithoutExistingWeight() {
+        let testDate = Calendar.current.date(from: DateComponents(year: 2024, month: 1, day: 15))!
+
+        var receivedDate: Date?
+        var receivedWeight: Double?
+
+        let onDateSelected: (Date, Double?) -> Void = { date, weight in
+            receivedDate = date
+            receivedWeight = weight
+        }
+
+        // Simulate calendar date selection without existing weight
+        onDateSelected(testDate, nil)
+
+        #expect(receivedDate != nil)
+        #expect(Calendar.current.isDate(receivedDate!, inSameDayAs: testDate))
+        #expect(receivedWeight == nil)
+
+        // Test WeightInputView initialization
+        let inputView = WeightInputView(initialDate: receivedDate, initialWeight: receivedWeight)
+
+        #expect(inputView.initialDate != nil)
+        #expect(Calendar.current.isDate(inputView.initialDate!, inSameDayAs: testDate))
+        #expect(inputView.initialWeight == nil)
+    }
+}

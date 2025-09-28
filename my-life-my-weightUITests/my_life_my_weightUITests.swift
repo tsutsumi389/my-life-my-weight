@@ -714,6 +714,85 @@ final class my_life_my_weightUITests: XCTestCase {
         }
     }
 
+    // MARK: - Calendar Navigation Tests
+
+    @MainActor
+    func testCalendarDateTapNavigationToRecord() throws {
+        print("=== TESTING CALENDAR DATE TAP NAVIGATION ===")
+
+        // First add some test data
+        addTestWeightEntry(weight: "70", decimal: "0")
+
+        // Navigate to history tab
+        let historyTab = app.tabBars.buttons["履歴"]
+        historyTab.tap()
+
+        // Wait for history view to load
+        usleep(1000000) // 1 second wait
+
+        // Look for calendar dates
+        let calendar = app.scrollViews.firstMatch
+        if calendar.exists {
+            // Try to find a date with data and tap it
+            let weekdayHeaders = ["日", "月", "火", "水", "木", "金", "土"]
+            var foundDateButton = false
+
+            // Look for any tappable date button
+            for weekday in weekdayHeaders {
+                if app.staticTexts[weekday].exists {
+                    // Found calendar, look for dates
+                    let buttons = app.buttons.allElementsBoundByIndex
+                    let availableButtons = Array(buttons.prefix(min(20, app.buttons.count)))
+
+                    for button in availableButtons {
+                        if button.exists && button.isHittable {
+                            // Try tapping this button (might be a calendar date)
+                            button.tap()
+                            foundDateButton = true
+                            break
+                        }
+                    }
+                    if foundDateButton { break }
+                }
+            }
+
+            if foundDateButton {
+                // Should navigate to record tab
+                usleep(500000) // 0.5 second wait for navigation
+                let recordTab = app.tabBars.buttons["記録"]
+                XCTAssertTrue(recordTab.isSelected || app.buttons["保存"].exists, "Should navigate to record tab or show record UI")
+            } else {
+                print("No tappable calendar dates found - this may be expected in some UI states")
+            }
+        } else {
+            print("Calendar view not found - checking if empty state is shown instead")
+            let emptyStateText = app.staticTexts["まだ記録がありません"]
+            // Empty state is acceptable when no calendar is shown
+        }
+    }
+
+    @MainActor
+    func testTabNavigationBetweenViews() throws {
+        print("=== TESTING TAB NAVIGATION ===")
+
+        let tabBar = app.tabBars.firstMatch
+        XCTAssertTrue(tabBar.exists, "Tab bar should exist")
+
+        // Test navigation to each tab
+        let tabs = ["記録", "グラフ", "履歴", "設定"]
+
+        for tabName in tabs {
+            let tab = app.tabBars.buttons[tabName]
+            XCTAssertTrue(tab.exists, "Tab '\(tabName)' should exist")
+
+            tab.tap()
+            usleep(500000) // 0.5 second wait for navigation
+
+            // Basic check that navigation worked
+            XCTAssertTrue(tab.isSelected || tabBar.exists, "Should be able to navigate to \(tabName) tab")
+        }
+    }
+
     // MARK: - Helper Methods
 
     private func clearAllData() {

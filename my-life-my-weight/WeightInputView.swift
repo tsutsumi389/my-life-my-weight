@@ -9,8 +9,17 @@ struct WeightInputView: View {
     @State private var alertTitle = ""
     @State private var hasAppeared = false
 
+    // Parameters for setting date and weight from external sources (like calendar)
+    let initialDate: Date?
+    let initialWeight: Double?
+
     private let weightRange: ClosedRange<Double> = 30.0...200.0
     private let weightStep: Double = 0.1
+
+    init(initialDate: Date? = nil, initialWeight: Double? = nil) {
+        self.initialDate = initialDate
+        self.initialWeight = initialWeight
+    }
 
 
     var body: some View {
@@ -68,7 +77,18 @@ struct WeightInputView: View {
     }
 
     private func setupInitialWeight() {
-        if let latestEntry = weightStore.latestEntry {
+        // First, set the date if provided from external source (like calendar)
+        if let initialDate = initialDate {
+            selectedDate = initialDate
+        }
+
+        // Then set the weight: priority is initialWeight > existing entry for date > latest entry > default
+        if let initialWeight = initialWeight {
+            selectedWeight = initialWeight
+        } else if let initialDate = initialDate,
+                  let existingEntry = weightStore.existingEntry(for: initialDate) {
+            selectedWeight = existingEntry.weight
+        } else if let latestEntry = weightStore.latestEntry {
             selectedWeight = latestEntry.weight
         } else {
             selectedWeight = 60.0
@@ -169,6 +189,6 @@ struct WeightPickerView: View {
         WeightEntry(weight: 65.5, date: Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date())
     ]
 
-    return WeightInputView()
+    return WeightInputView(initialDate: nil, initialWeight: nil)
         .environmentObject(store)
 }

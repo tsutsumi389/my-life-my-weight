@@ -20,6 +20,7 @@ struct ContentView: View {
                 initialWeight: calendarSelectedWeight
             )
                 .environmentObject(weightStore)
+                .id("\(calendarSelectedDate?.timeIntervalSince1970 ?? 0)") // Force recreation when date changes
                 .tabItem {
                     Label("記録", systemImage: "plus.circle")
                 }

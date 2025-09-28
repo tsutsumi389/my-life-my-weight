@@ -7,7 +7,6 @@ struct WeightInputView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var alertTitle = ""
-    @State private var hasAppeared = false
 
     // Parameters for setting date and weight from external sources (like calendar)
     let initialDate: Date?
@@ -59,10 +58,7 @@ struct WeightInputView: View {
             }
             .navigationBarHidden(true)
             .onAppear {
-                if !hasAppeared {
-                    setupInitialWeight()
-                    hasAppeared = true
-                }
+                setupInitialWeight()
             }
             .alert(alertTitle, isPresented: $showingAlert) {
                 Button("OK") { }
@@ -106,7 +102,10 @@ struct WeightInputView: View {
             showAlert(title: "完了", message: "体重を記録しました")
         }
 
-        selectedDate = Date()
+        // Only reset date if not set from external source (like calendar)
+        if initialDate == nil {
+            selectedDate = Date()
+        }
     }
 
     private func showAlert(title: String, message: String) {

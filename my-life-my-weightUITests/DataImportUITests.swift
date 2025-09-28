@@ -253,11 +253,21 @@ final class DataImportUITests: XCTestCase {
         // Wait a moment and check what UI elements are visible after tap
         usleep(500000) // 0.5 second wait
         print("=== After import button tap ===")
-        let afterTapTexts = app.staticTexts.allElementsBoundByIndex
-        let availableTexts = Array(afterTapTexts.prefix(min(10, afterTapTexts.count)))
-        for (i, text) in availableTexts.enumerated() {
-            if text.exists {
-                print("  Post-tap text \(i): '\(text.label)'")
+        // Use safer element access pattern
+        do {
+            let staticTextsCount = app.staticTexts.count
+            print("Total static texts available: \(staticTextsCount)")
+
+            if staticTextsCount > 0 {
+                let safeLimit = min(5, staticTextsCount) // More conservative limit
+                for i in 0..<safeLimit {
+                    let text = app.staticTexts.element(boundBy: i)
+                    if text.exists {
+                        print("  Post-tap text \(i): '\(text.label)'")
+                    }
+                }
+            } else {
+                print("  No static texts available")
             }
         }
 
@@ -271,7 +281,8 @@ final class DataImportUITests: XCTestCase {
             // Check for error messages
             let errorTexts = app.staticTexts.containing(NSPredicate(format: "label CONTAINS 'エラー' OR label CONTAINS '失敗' OR label CONTAINS '正しくありません' OR label CONTAINS '形式'"))
             print("Error message count: \(errorTexts.count)")
-            for errorText in errorTexts.allElementsBoundByIndex {
+            let availableErrorTexts = Array(errorTexts.allElementsBoundByIndex.prefix(min(5, errorTexts.count)))
+            for errorText in availableErrorTexts {
                 if errorText.exists {
                     print("  Error: '\(errorText.label)'")
                 }
@@ -445,7 +456,8 @@ final class DataImportUITests: XCTestCase {
             // Debug: Check what elements are still visible
             print("Import sheet still visible. Checking current UI state...")
             let allNavigationBars = app.navigationBars.allElementsBoundByIndex
-            for navBar in allNavigationBars {
+            let availableNavBars = Array(allNavigationBars.prefix(min(5, app.navigationBars.count)))
+            for navBar in availableNavBars {
                 if navBar.exists {
                     print("Visible navigation bar: \(navBar.identifier)")
                 }
@@ -518,7 +530,8 @@ final class DataImportUITests: XCTestCase {
             print("Import sheet failed to appear. Checking current UI state...")
             let allNavBars = app.navigationBars
             print("Navigation bar count: \(allNavBars.count)")
-            for (i, navBar) in allNavBars.allElementsBoundByIndex.enumerated() {
+            let availableNavBars = Array(allNavBars.allElementsBoundByIndex.prefix(min(5, allNavBars.count)))
+            for (i, navBar) in availableNavBars.enumerated() {
                 if navBar.exists {
                     print("  Nav bar \(i): \(navBar.identifier)")
                 }

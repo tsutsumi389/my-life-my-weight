@@ -153,8 +153,12 @@ struct SettingsView: View {
         let dateString = components[0]
         let weightString = components[1]
 
+        // 厳密な日付形式チェック（yyyy/MM/dd）
+        guard isValidDateFormat(dateString) else { return nil }
+
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy/MM/dd"
+        dateFormatter.isLenient = false
 
         guard let date = dateFormatter.date(from: dateString),
               let weight = Double(weightString) else {
@@ -162,6 +166,39 @@ struct SettingsView: View {
         }
 
         return WeightEntry(weight: weight, date: date)
+    }
+
+    private func isValidDateFormat(_ dateString: String) -> Bool {
+        // 正確にyyyy/MM/dd形式かチェック（10文字、スラッシュの位置など）
+        guard dateString.count == 10 else { return false }
+
+        let components = dateString.components(separatedBy: "/")
+        guard components.count == 3 else { return false }
+
+        let year = components[0]
+        let month = components[1]
+        let day = components[2]
+
+        // 年は4桁、月と日は2桁である必要がある
+        guard year.count == 4,
+              month.count == 2,
+              day.count == 2 else { return false }
+
+        // すべて数字である必要がある
+        guard year.allSatisfy(\.isNumber),
+              month.allSatisfy(\.isNumber),
+              day.allSatisfy(\.isNumber) else { return false }
+
+        // 基本的な範囲チェック
+        guard let yearInt = Int(year),
+              let monthInt = Int(month),
+              let dayInt = Int(day) else { return false }
+
+        guard yearInt >= 1900 && yearInt <= 2100,
+              monthInt >= 1 && monthInt <= 12,
+              dayInt >= 1 && dayInt <= 31 else { return false }
+
+        return true
     }
 }
 

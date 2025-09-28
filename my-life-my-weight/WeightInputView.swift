@@ -30,15 +30,17 @@ struct WeightInputView: View {
 
                 Spacer()
 
-                Button("保存") {
+                Button(action: {
                     saveWeight()
+                }) {
+                    Text("保存")
+                        .font(.title2)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 60)
                 }
-                .font(.title2)
-                .fontWeight(.semibold)
-                .frame(maxWidth: .infinity)
-                .frame(height: 60)
                 .background(Color.accentColor)
-                .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .disabled(!isValidWeight)
                 .opacity(isValidWeight ? 1.0 : 0.6)

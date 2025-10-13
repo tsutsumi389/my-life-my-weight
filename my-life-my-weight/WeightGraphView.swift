@@ -39,10 +39,9 @@ struct WeightGraphView: View {
 
         switch selectedPeriod {
         case .oneMonth:
-            guard let oneMonthAgo = calendar.date(byAdding: .month, value: -1, to: now) else {
-                return weightStore.entries
-            }
-            return weightStore.entries.filter { $0.date >= oneMonthAgo }
+            // Get the last 30 entries
+            let sortedAllEntries = weightStore.entries.sorted { $0.date > $1.date }
+            return Array(sortedAllEntries.prefix(30))
         case .oneYear:
             guard let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: now) else {
                 return weightStore.entries
@@ -163,8 +162,16 @@ struct WeightGraphView: View {
 
         switch selectedPeriod {
         case .oneMonth:
-            let oneMonthAgo = calendar.date(byAdding: .month, value: -1, to: now) ?? now
-            return oneMonthAgo...now
+            // If there are entries, use the actual date range of the filtered data
+            if !sortedEntries.isEmpty,
+               let minDate = sortedEntries.map({ $0.date }).min(),
+               let maxDate = sortedEntries.map({ $0.date }).max() {
+                return minDate...maxDate
+            } else {
+                // Fallback to calendar-based range when no data
+                let oneMonthAgo = calendar.date(byAdding: .month, value: -1, to: now) ?? now
+                return oneMonthAgo...now
+            }
         case .oneYear:
             let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: now) ?? now
             return oneYearAgo...now

@@ -73,9 +73,11 @@ struct WeightInputView: View {
     }
 
     private func setupInitialWeight() {
-        // First, set the date if provided from external source (like calendar)
+        // Set the date: use initialDate if provided, otherwise use today
         if let initialDate = initialDate {
             selectedDate = initialDate
+        } else {
+            selectedDate = Date()
         }
 
         // Then set the weight: priority is initialWeight > existing entry for date > latest entry > default

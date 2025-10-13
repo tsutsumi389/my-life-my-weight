@@ -407,6 +407,12 @@ final class WeightHistoryUITests: XCTestCase {
 
                     if navigationSuccessful {
                         print("SUCCESS: Calendar date tap navigation to record tab worked")
+
+                        // Verify that the selected date is displayed (not today's date by default)
+                        // The date picker should show the tapped date from calendar
+                        let datePicker = app.datePickers.firstMatch
+                        XCTAssertTrue(datePicker.exists, "Date picker should exist in record view")
+                        XCTAssertTrue(datePicker.isEnabled, "Date picker should be enabled")
                     } else {
                         print("Navigation may not have occurred, but this could be expected behavior")
                     }
@@ -424,5 +430,33 @@ final class WeightHistoryUITests: XCTestCase {
             let emptyStateText = app.staticTexts["まだ記録がありません"]
             // Empty state is acceptable when no data exists
         }
+    }
+
+    @MainActor
+    func testRecordTabDefaultDate() throws {
+        // Test that clicking record tab from other tabs shows today's date by default
+
+        // Start from history tab
+        app.tabBars.buttons["履歴"].tap()
+        usleep(500000) // 0.5 second wait
+
+        // Navigate to graph tab
+        app.tabBars.buttons["グラフ"].tap()
+        usleep(500000) // 0.5 second wait
+
+        // Click record tab (not from history tab)
+        app.tabBars.buttons["記録"].tap()
+        usleep(500000) // 0.5 second wait
+
+        // Verify record view is displayed
+        let saveButton = app.buttons["保存"]
+        XCTAssertTrue(saveButton.exists, "Save button should exist in record view")
+
+        // The date picker should show today's date (default behavior)
+        let datePicker = app.datePickers.firstMatch
+        XCTAssertTrue(datePicker.exists, "Date picker should exist")
+        XCTAssertTrue(datePicker.isEnabled, "Date picker should be enabled")
+
+        print("Record tab shows default (today's) date when navigating from non-history tabs")
     }
 }

@@ -337,9 +337,10 @@ final class WeightInputUITests: XCTestCase {
         // Save an entry
         addWeightEntry(weight: "65", decimal: "0")
 
-        // After saving, date should reset to today
-        // Note: This is based on the implementation that resets selectedDate to Date()
+        // After saving, date should remain as current (today) since no initialDate was set
+        // The date picker should still exist and be functional
         XCTAssertTrue(datePicker.exists, "Date picker should still exist after save")
+        XCTAssertTrue(datePicker.isEnabled, "Date picker should be enabled after save")
     }
 
     // MARK: - UI Layout Tests

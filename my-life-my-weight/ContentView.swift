@@ -25,6 +25,13 @@ struct ContentView: View {
                     Label("記録", systemImage: "plus.circle")
                 }
                 .tag(0)
+                .onChange(of: selectedTab) { oldValue, newValue in
+                    // Reset to today's date when switching to the record tab
+                    if newValue == 0 && oldValue != 0 {
+                        calendarSelectedDate = nil
+                        calendarSelectedWeight = nil
+                    }
+                }
 
             WeightGraphView()
                 .environmentObject(weightStore)

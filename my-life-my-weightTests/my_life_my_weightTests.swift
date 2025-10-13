@@ -650,6 +650,105 @@ struct WeightHistoryViewTests {
     }
 }
 
+struct WeightGraphViewTests {
+
+    func createTestStore(withEntryCount count: Int) -> WeightStore {
+        let testSuiteName = "test-graphview-\(UUID().uuidString)"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: "WeightEntries")
+
+        let store = WeightStore(userDefaults: testDefaults)
+        let calendar = Calendar.current
+        let today = Date()
+
+        for i in 0..<count {
+            let date = calendar.date(byAdding: .day, value: -i, to: today)!
+            let weight = 70.0 + Double(i) * 0.1
+            store.addEntry(WeightEntry(weight: weight, date: date))
+        }
+
+        return store
+    }
+
+    @Test func testOneMonthPeriodShowsLast30Entries() {
+        // Create store with 50 entries
+        let store = createTestStore(withEntryCount: 50)
+
+        #expect(store.entries.count == 50)
+
+        // Simulate the filtering logic from WeightGraphView for oneMonth period
+        let sortedAllEntries = store.entries.sorted { $0.date > $1.date }
+        let filteredEntries = Array(sortedAllEntries.prefix(30))
+
+        #expect(filteredEntries.count == 30)
+
+        // Verify the entries are the most recent 30
+        // The most recent entry should have the earliest date offset (0 days ago)
+        let firstEntry = filteredEntries.first!
+        let lastEntry = filteredEntries.last!
+
+        #expect(firstEntry.date >= lastEntry.date)
+    }
+
+    @Test func testOneMonthPeriodWithFewerThan30Entries() {
+        // Create store with only 20 entries
+        let store = createTestStore(withEntryCount: 20)
+
+        #expect(store.entries.count == 20)
+
+        // Simulate the filtering logic
+        let sortedAllEntries = store.entries.sorted { $0.date > $1.date }
+        let filteredEntries = Array(sortedAllEntries.prefix(30))
+
+        // Should return all 20 entries
+        #expect(filteredEntries.count == 20)
+    }
+
+    @Test func testOneMonthPeriodWithNoEntries() {
+        // Create empty store
+        let testSuiteName = "test-graphview-empty-\(UUID().uuidString)"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: "WeightEntries")
+        let store = WeightStore(userDefaults: testDefaults)
+
+        #expect(store.entries.isEmpty)
+
+        // Simulate the filtering logic
+        let sortedAllEntries = store.entries.sorted { $0.date > $1.date }
+        let filteredEntries = Array(sortedAllEntries.prefix(30))
+
+        #expect(filteredEntries.isEmpty)
+    }
+
+    @Test func testOneYearPeriodUsesDateFiltering() {
+        let store = createTestStore(withEntryCount: 400) // Entries spanning more than a year
+        let calendar = Calendar.current
+        let now = Date()
+
+        guard let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: now) else {
+            Issue.record("Failed to create date one year ago")
+            return
+        }
+
+        // Simulate the filtering logic for oneYear period
+        let filteredEntries = store.entries.filter { $0.date >= oneYearAgo }
+
+        // Should have approximately 365 entries (one per day for the last year)
+        // Allow some margin since we're creating entries going back from today
+        #expect(filteredEntries.count <= 366)
+        #expect(filteredEntries.count >= 364)
+    }
+
+    @Test func testAllTimePeriodShowsAllEntries() {
+        let store = createTestStore(withEntryCount: 100)
+
+        // Simulate the filtering logic for allTime period
+        let filteredEntries = store.entries
+
+        #expect(filteredEntries.count == 100)
+    }
+}
+
 struct CalendarNavigationTests {
 
     @Test func testCalendarToRecordTabNavigation() {

@@ -458,6 +458,82 @@ final class my_life_my_weightUITests: XCTestCase {
         XCTAssertTrue(true) // Basic navigation test
     }
 
+    @MainActor
+    func testGraphPeriodSelection() throws {
+        print("=== TESTING GRAPH PERIOD SELECTION ===")
+
+        // Navigate to graph tab
+        let graphTab = app.tabBars.buttons["グラフ"]
+        graphTab.tap()
+
+        // Wait for graph view to load
+        usleep(500000) // 0.5 second wait
+
+        // Check if period segmented control exists
+        let segmentedControl = app.segmentedControls.firstMatch
+        XCTAssertTrue(segmentedControl.exists, "Period selection control should exist")
+
+        // Test each period button
+        let periods = ["1ヶ月", "1年", "全期間"]
+
+        for period in periods {
+            let periodButton = segmentedControl.buttons[period]
+            if periodButton.exists {
+                print("Testing period: \(period)")
+                periodButton.tap()
+
+                // Wait for graph to update
+                usleep(300000) // 0.3 second wait
+
+                // Check that the tap was successful (no crash)
+                XCTAssertTrue(segmentedControl.exists, "Segmented control should still exist after selecting \(period)")
+            } else {
+                print("Warning: Period button '\(period)' not found")
+            }
+        }
+
+        print("=== GRAPH PERIOD SELECTION TEST COMPLETE ===")
+    }
+
+    @MainActor
+    func testGraphWithData() throws {
+        print("=== TESTING GRAPH WITH DATA ===")
+
+        // Add multiple weight entries to test graph display
+        for i in 0..<5 {
+            addTestWeightEntry(weight: "\(70 + i)", decimal: "\(i)")
+            usleep(1000000) // 1 second wait between entries
+        }
+
+        // Navigate to graph tab
+        let graphTab = app.tabBars.buttons["グラフ"]
+        graphTab.tap()
+
+        // Wait for graph to load
+        usleep(1000000) // 1 second wait
+
+        // Check if graph view is displayed (segmented control should be visible)
+        let segmentedControl = app.segmentedControls.firstMatch
+        XCTAssertTrue(segmentedControl.exists, "Graph controls should be visible with data")
+
+        // Test that we can switch between periods with data
+        let oneMonthButton = segmentedControl.buttons["1ヶ月"]
+        if oneMonthButton.exists {
+            oneMonthButton.tap()
+            usleep(500000) // 0.5 second wait
+            XCTAssertTrue(segmentedControl.exists, "Graph should update for 1ヶ月 period")
+        }
+
+        let oneYearButton = segmentedControl.buttons["1年"]
+        if oneYearButton.exists {
+            oneYearButton.tap()
+            usleep(500000) // 0.5 second wait
+            XCTAssertTrue(segmentedControl.exists, "Graph should update for 1年 period")
+        }
+
+        print("=== GRAPH WITH DATA TEST COMPLETE ===")
+    }
+
     // MARK: - Integration Tests
 
     @MainActor

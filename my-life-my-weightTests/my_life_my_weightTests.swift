@@ -720,23 +720,37 @@ struct WeightGraphViewTests {
         #expect(filteredEntries.isEmpty)
     }
 
-    @Test func testOneYearPeriodUsesDateFiltering() {
-        let store = createTestStore(withEntryCount: 400) // Entries spanning more than a year
-        let calendar = Calendar.current
-        let now = Date()
+    @Test func testOneYearPeriodShowsLast365Entries() {
+        // Create store with 500 entries (more than 365)
+        let store = createTestStore(withEntryCount: 500)
 
-        guard let oneYearAgo = calendar.date(byAdding: .year, value: -1, to: now) else {
-            Issue.record("Failed to create date one year ago")
-            return
-        }
+        #expect(store.entries.count == 500)
 
-        // Simulate the filtering logic for oneYear period
-        let filteredEntries = store.entries.filter { $0.date >= oneYearAgo }
+        // Simulate the filtering logic from WeightGraphView for oneYear period
+        let sortedAllEntries = store.entries.sorted { $0.date > $1.date }
+        let filteredEntries = Array(sortedAllEntries.prefix(365))
 
-        // Should have approximately 365 entries (one per day for the last year)
-        // Allow some margin since we're creating entries going back from today
-        #expect(filteredEntries.count <= 366)
-        #expect(filteredEntries.count >= 364)
+        #expect(filteredEntries.count == 365)
+
+        // Verify the entries are the most recent 365
+        let firstEntry = filteredEntries.first!
+        let lastEntry = filteredEntries.last!
+
+        #expect(firstEntry.date >= lastEntry.date)
+    }
+
+    @Test func testOneYearPeriodWithFewerThan365Entries() {
+        // Create store with only 200 entries
+        let store = createTestStore(withEntryCount: 200)
+
+        #expect(store.entries.count == 200)
+
+        // Simulate the filtering logic
+        let sortedAllEntries = store.entries.sorted { $0.date > $1.date }
+        let filteredEntries = Array(sortedAllEntries.prefix(365))
+
+        // Should return all 200 entries
+        #expect(filteredEntries.count == 200)
     }
 
     @Test func testAllTimePeriodShowsAllEntries() {

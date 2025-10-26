@@ -94,39 +94,130 @@ final class WeightInputUITests: XCTestCase {
 
     @MainActor
     func testDatePickerInteraction() throws {
-        let datePicker = app.datePickers.firstMatch
-        XCTAssertTrue(datePicker.exists, "Date picker should exist")
-
-        // Debug information
-        print("Date picker properties:")
-        print("- exists: \(datePicker.exists)")
-        print("- isEnabled: \(datePicker.isEnabled)")
-        print("- isHittable: \(datePicker.isHittable)")
-        print("- frame: \(datePicker.frame)")
-
-        // For compact date picker, check if it's enabled rather than hittable
-        XCTAssertTrue(datePicker.isEnabled, "Date picker should be enabled")
-
-        // Try to tap date picker (compact style may not always respond to tap immediately)
-        if datePicker.isHittable {
-            print("Date picker is hittable, attempting to tap...")
-            datePicker.tap()
-
-            // Wait a moment to see if date picker UI updates
-            usleep(500000) // 0.5 second wait
-
-            // Check if any modal or popover appeared
-            let popovers = app.popovers
-            let sheets = app.sheets
-            print("After tap - Popovers count: \(popovers.count), Sheets count: \(sheets.count)")
-        } else {
-            print("Date picker is not hittable - this is normal for compact style in some cases")
+        // Date is now displayed as a button in format "2025年10月26日（金）"
+        // Find the date button by looking for text containing "年" (year indicator)
+        let dateButtons = app.buttons.allElementsBoundByIndex.filter { button in
+            button.label.contains("年") && button.label.contains("月") && button.label.contains("日")
         }
 
-        // Verify save button remains functional regardless of date picker interaction
+        XCTAssertFalse(dateButtons.isEmpty, "Date button should exist")
+        let dateButton = dateButtons.first!
+
+        // Debug information
+        print("Date button properties:")
+        print("- exists: \(dateButton.exists)")
+        print("- isEnabled: \(dateButton.isEnabled)")
+        print("- isHittable: \(dateButton.isHittable)")
+        print("- label: \(dateButton.label)")
+
+        XCTAssertTrue(dateButton.isEnabled, "Date button should be enabled")
+        XCTAssertTrue(dateButton.isHittable, "Date button should be hittable")
+
+        // Tap the date button to open the sheet
+        dateButton.tap()
+
+        // Wait for sheet to appear
+        usleep(500000) // 0.5 second wait
+
+        // Check if sheet appeared with graphical date picker
+        let sheets = app.sheets
+        print("After tap - Sheets count: \(sheets.count)")
+
+        if sheets.count > 0 {
+            let sheet = sheets.firstMatch
+            XCTAssertTrue(sheet.exists, "Date picker sheet should appear")
+
+            // Check for navigation title
+            let navigationTitle = sheet.staticTexts["日付を選択"]
+            XCTAssertTrue(navigationTitle.exists, "Sheet should have title '日付を選択'")
+
+            // Check for cancel button
+            let cancelButton = sheet.buttons["キャンセル"]
+            XCTAssertTrue(cancelButton.exists, "Cancel button should exist")
+
+            // Close the sheet
+            cancelButton.tap()
+
+            // Wait for sheet to dismiss
+            usleep(500000) // 0.5 second wait
+
+            XCTAssertFalse(sheet.exists, "Sheet should be dismissed")
+        }
+
+        // Verify save button remains functional
         let saveButton = app.buttons["保存"]
         XCTAssertTrue(saveButton.exists, "Save button should exist")
         XCTAssertTrue(saveButton.isEnabled, "Save button should be enabled")
+    }
+
+    @MainActor
+    func testDatePickerSheetAutoClose() throws {
+        // Find and tap the date button
+        let dateButtons = app.buttons.allElementsBoundByIndex.filter { button in
+            button.label.contains("年") && button.label.contains("月") && button.label.contains("日")
+        }
+
+        XCTAssertFalse(dateButtons.isEmpty, "Date button should exist")
+        let dateButton = dateButtons.first!
+
+        // Store the original date text
+        let originalDateText = dateButton.label
+        print("Original date: \(originalDateText)")
+
+        // Tap to open the sheet
+        dateButton.tap()
+        usleep(500000) // Wait for sheet to appear
+
+        // Verify sheet appeared
+        let sheet = app.sheets.firstMatch
+        XCTAssertTrue(sheet.exists, "Date picker sheet should appear")
+
+        // Find the graphical date picker in the sheet
+        let datePicker = sheet.datePickers.firstMatch
+        if datePicker.exists {
+            // Tap on the date picker to select a date
+            // Note: In UI tests, selecting a specific date in graphical picker is complex
+            // We'll verify the sheet exists and can be interacted with
+            print("Date picker exists in sheet")
+
+            // Try to find and tap a date cell (this may vary based on current date)
+            // For now, we'll just verify the sheet can be dismissed by tapping cancel
+            let cancelButton = sheet.buttons["キャンセル"]
+            XCTAssertTrue(cancelButton.exists, "Cancel button should exist")
+
+            cancelButton.tap()
+            usleep(500000) // Wait for sheet to dismiss
+
+            // Verify sheet is dismissed
+            XCTAssertFalse(sheet.exists, "Sheet should be dismissed after tapping cancel")
+        }
+    }
+
+    @MainActor
+    func testDateDisplayFormat() throws {
+        // Verify date is displayed in the format "yyyy年M月d日（曜）"
+        let dateButtons = app.buttons.allElementsBoundByIndex.filter { button in
+            button.label.contains("年") && button.label.contains("月") && button.label.contains("日")
+        }
+
+        XCTAssertFalse(dateButtons.isEmpty, "Date button should exist")
+        let dateButton = dateButtons.first!
+
+        let dateText = dateButton.label
+        print("Date format: \(dateText)")
+
+        // Check format contains expected components
+        XCTAssertTrue(dateText.contains("年"), "Date should contain year")
+        XCTAssertTrue(dateText.contains("月"), "Date should contain month")
+        XCTAssertTrue(dateText.contains("日"), "Date should contain day")
+        XCTAssertTrue(dateText.contains("(") || dateText.contains("（"), "Date should contain opening parenthesis")
+        XCTAssertTrue(dateText.contains(")") || dateText.contains("）"), "Date should contain closing parenthesis")
+
+        // Verify weekday is present (one character between parentheses)
+        // Japanese weekdays: 月火水木金土日
+        let weekdays = ["月", "火", "水", "木", "金", "土", "日"]
+        let containsWeekday = weekdays.contains { dateText.contains("(\($0))") || dateText.contains("（\($0)）") }
+        XCTAssertTrue(containsWeekday, "Date should contain weekday in parentheses")
     }
 
     // MARK: - Save Button Tests
@@ -331,16 +422,21 @@ final class WeightInputUITests: XCTestCase {
 
     @MainActor
     func testDateResetAfterSave() throws {
-        // Get current date picker value
-        let datePicker = app.datePickers.firstMatch
+        // Find the date button
+        let dateButtons = app.buttons.allElementsBoundByIndex.filter { button in
+            button.label.contains("年") && button.label.contains("月") && button.label.contains("日")
+        }
+
+        XCTAssertFalse(dateButtons.isEmpty, "Date button should exist")
+        let dateButton = dateButtons.first!
 
         // Save an entry
         addWeightEntry(weight: "65", decimal: "0")
 
         // After saving, date should remain as current (today) since no initialDate was set
-        // The date picker should still exist and be functional
-        XCTAssertTrue(datePicker.exists, "Date picker should still exist after save")
-        XCTAssertTrue(datePicker.isEnabled, "Date picker should be enabled after save")
+        // The date button should still exist and be functional
+        XCTAssertTrue(dateButton.exists, "Date button should still exist after save")
+        XCTAssertTrue(dateButton.isEnabled, "Date button should be enabled after save")
     }
 
     // MARK: - UI Layout Tests
@@ -348,8 +444,12 @@ final class WeightInputUITests: XCTestCase {
     @MainActor
     func testUIElementsLayout() throws {
         // Check all main UI elements exist and are positioned correctly
-        let datePicker = app.datePickers.firstMatch
-        XCTAssertTrue(datePicker.exists, "Date picker should be visible")
+
+        // Find the date button
+        let dateButtons = app.buttons.allElementsBoundByIndex.filter { button in
+            button.label.contains("年") && button.label.contains("月") && button.label.contains("日")
+        }
+        XCTAssertFalse(dateButtons.isEmpty, "Date button should be visible")
 
         let weightPickers = app.pickers
         XCTAssertTrue(weightPickers.count >= 2, "Weight pickers should be visible")

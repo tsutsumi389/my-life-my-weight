@@ -42,6 +42,7 @@ struct WeightInputView: View {
                                     .fill(Color(.systemGray6))
                             )
                     }
+                    .accessibilityIdentifier("DateButton")
                     .padding(.horizontal, 20)
 
                     WeightPickerView(selectedWeight: $selectedWeight, range: weightRange)
@@ -177,6 +178,7 @@ struct DatePickerSheet: View {
             }
         }
         .presentationDetents([.medium])
+        .accessibilityIdentifier("DatePickerSheet")
     }
 }
 

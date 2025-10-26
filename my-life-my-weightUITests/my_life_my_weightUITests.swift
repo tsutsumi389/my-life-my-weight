@@ -59,9 +59,11 @@ final class my_life_my_weightUITests: XCTestCase {
         let recordTab = app.tabBars.buttons["記録"]
         recordTab.tap()
 
-        // Check date picker exists
-        let datePicker = app.datePickers.firstMatch
-        XCTAssertTrue(datePicker.exists)
+        // Check date button exists (date is now displayed as a button)
+        let dateButtons = app.buttons.allElementsBoundByIndex.filter { button in
+            button.label.contains("年") && button.label.contains("月") && button.label.contains("日")
+        }
+        XCTAssertTrue(!dateButtons.isEmpty, "Date button should exist")
 
         // Check weight pickers exist
         let weightPickers = app.pickers
@@ -736,35 +738,19 @@ final class my_life_my_weightUITests: XCTestCase {
         XCTAssertTrue(saveButton.exists)
         XCTAssertTrue(saveButton.isHittable)
 
-        let datePicker = app.datePickers.firstMatch
-        XCTAssertTrue(datePicker.exists)
+        // Check date button exists and is accessible (date is now displayed as a button)
+        let dateButtons = app.buttons.allElementsBoundByIndex.filter { button in
+            button.label.contains("年") && button.label.contains("月") && button.label.contains("日")
+        }
+        XCTAssertTrue(!dateButtons.isEmpty, "Date button should exist")
 
-        // Date picker accessibility check with error handling
-        // Compact style date pickers may not always be hittable but should be enabled
-        print("Date picker accessibility check:")
-        print("- Exists: \(datePicker.exists)")
-        print("- Enabled: \(datePicker.isEnabled)")
-        print("- Hittable: \(datePicker.isHittable)")
+        if let dateButton = dateButtons.first {
+            print("Date button accessibility check:")
+            print("- Exists: \(dateButton.exists)")
+            print("- Enabled: \(dateButton.isEnabled)")
+            print("- Hittable: \(dateButton.isHittable)")
 
-        if datePicker.isHittable {
-            print("Date picker is hittable - accessibility test passed")
-        } else if datePicker.isEnabled {
-            print("Date picker is enabled but not hittable - this is acceptable for compact style")
-        } else if datePicker.exists {
-            print("Date picker exists but interaction may be limited - this is acceptable for some UI configurations")
-        } else {
-            // Even if date picker doesn't exist, check if basic UI elements are accessible
-            print("WARNING: Date picker not accessible, checking basic UI accessibility...")
-            let saveButton = app.buttons["保存"]
-            let tabBar = app.tabBars.firstMatch
-            let basicAccessibility = saveButton.exists && tabBar.exists
-
-            if basicAccessibility {
-                print("Test passes: Basic UI accessibility is functional")
-                return
-            }
-
-            XCTFail("Critical accessibility issues found - basic UI elements not accessible")
+            XCTAssertTrue(dateButton.isHittable, "Date button should be hittable")
         }
     }
 

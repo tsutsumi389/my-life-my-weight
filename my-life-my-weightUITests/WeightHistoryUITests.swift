@@ -452,10 +452,16 @@ final class WeightHistoryUITests: XCTestCase {
         let saveButton = app.buttons["保存"]
         XCTAssertTrue(saveButton.exists, "Save button should exist in record view")
 
-        // The date picker should show today's date (default behavior)
-        let datePicker = app.datePickers.firstMatch
-        XCTAssertTrue(datePicker.exists, "Date picker should exist")
-        XCTAssertTrue(datePicker.isEnabled, "Date picker should be enabled")
+        // The date button should show today's date (default behavior)
+        let dateButtons = app.buttons.allElementsBoundByIndex.filter { button in
+            button.label.contains("年") && button.label.contains("月") && button.label.contains("日")
+        }
+        XCTAssertTrue(!dateButtons.isEmpty, "Date button should exist")
+
+        if let dateButton = dateButtons.first {
+            XCTAssertTrue(dateButton.isEnabled, "Date button should be enabled")
+            print("Date button text: \(dateButton.label)")
+        }
 
         print("Record tab shows default (today's) date when navigating from non-history tabs")
     }

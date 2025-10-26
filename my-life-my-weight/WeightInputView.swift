@@ -31,22 +31,16 @@ struct WeightInputView: View {
                     Button(action: {
                         showingDatePicker = true
                     }) {
-                        VStack(spacing: 8) {
-                            Text(formattedDate)
-                                .font(.title)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.primary)
-
-                            Text(formattedWeekday)
-                                .font(.title3)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 16)
-                        .frame(maxWidth: .infinity)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemGray6))
-                        )
+                        Text(formattedDate)
+                            .font(.title)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.primary)
+                            .padding(.vertical, 16)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemGray6))
+                            )
                     }
                     .padding(.horizontal, 20)
 
@@ -95,14 +89,7 @@ struct WeightInputView: View {
     private var formattedDate: String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "yyyy年M月d日"
-        return formatter.string(from: selectedDate)
-    }
-
-    private var formattedWeekday: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        formatter.dateFormat = "EEEE"
+        formatter.dateFormat = "yyyy年M月d日(EEEEE)"
         return formatter.string(from: selectedDate)
     }
 

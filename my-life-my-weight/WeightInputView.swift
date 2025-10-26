@@ -7,6 +7,7 @@ struct WeightInputView: View {
     @State private var showingAlert = false
     @State private var alertMessage = ""
     @State private var alertTitle = ""
+    @State private var showingDatePicker = false
 
     // Parameters for setting date and weight from external sources (like calendar)
     let initialDate: Date?
@@ -27,11 +28,22 @@ struct WeightInputView: View {
                 Spacer()
 
                 VStack(spacing: 40) {
-                    DatePicker("", selection: $selectedDate, displayedComponents: [.date])
-                        .datePickerStyle(.compact)
-                        .labelsHidden()
-                        .scaleEffect(1.4)
-                        .environment(\.locale, Locale(identifier: "ja_JP"))
+                    Button(action: {
+                        showingDatePicker = true
+                    }) {
+                        Text(formattedDate)
+                            .font(.title)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.primary)
+                            .padding(.vertical, 16)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemGray6))
+                            )
+                    }
+                    .accessibilityIdentifier("DateButton")
+                    .padding(.horizontal, 20)
 
                     WeightPickerView(selectedWeight: $selectedWeight, range: weightRange)
                 }
@@ -65,11 +77,21 @@ struct WeightInputView: View {
             } message: {
                 Text(alertMessage)
             }
+            .sheet(isPresented: $showingDatePicker) {
+                DatePickerSheet(selectedDate: $selectedDate, isPresented: $showingDatePicker)
+            }
         }
     }
 
     private var isValidWeight: Bool {
         selectedWeight >= weightRange.lowerBound && selectedWeight <= weightRange.upperBound
+    }
+
+    private var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.dateFormat = "yyyy年M月d日(EEEEE)"
+        return formatter.string(from: selectedDate)
     }
 
     private func setupInitialWeight() {
@@ -114,6 +136,49 @@ struct WeightInputView: View {
         alertTitle = title
         alertMessage = message
         showingAlert = true
+    }
+}
+
+struct DatePickerSheet: View {
+    @Binding var selectedDate: Date
+    @Binding var isPresented: Bool
+    @State private var tempDate: Date
+
+    init(selectedDate: Binding<Date>, isPresented: Binding<Bool>) {
+        self._selectedDate = selectedDate
+        self._isPresented = isPresented
+        self._tempDate = State(initialValue: selectedDate.wrappedValue)
+    }
+
+    var body: some View {
+        NavigationView {
+            VStack {
+                DatePicker("", selection: $tempDate, displayedComponents: [.date])
+                    .datePickerStyle(.graphical)
+                    .environment(\.locale, Locale(identifier: "ja_JP"))
+                    .padding()
+                    .onChange(of: tempDate) { oldValue, newValue in
+                        // 日付が変更されたら即座にシートを閉じる
+                        if oldValue != newValue {
+                            selectedDate = newValue
+                            isPresented = false
+                        }
+                    }
+
+                Spacer()
+            }
+            .navigationTitle("日付を選択")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("キャンセル") {
+                        isPresented = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+        .accessibilityIdentifier("DatePickerSheet")
     }
 }
 

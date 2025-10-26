@@ -27,11 +27,17 @@ struct WeightInputView: View {
                 Spacer()
 
                 VStack(spacing: 40) {
-                    DatePicker("", selection: $selectedDate, displayedComponents: [.date])
-                        .datePickerStyle(.compact)
-                        .labelsHidden()
-                        .scaleEffect(1.4)
-                        .environment(\.locale, Locale(identifier: "ja_JP"))
+                    VStack(spacing: 8) {
+                        DatePicker("", selection: $selectedDate, displayedComponents: [.date])
+                            .datePickerStyle(.compact)
+                            .labelsHidden()
+                            .scaleEffect(1.4)
+                            .environment(\.locale, Locale(identifier: "ja_JP"))
+
+                        Text(formattedWeekday)
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
 
                     WeightPickerView(selectedWeight: $selectedWeight, range: weightRange)
                 }
@@ -70,6 +76,13 @@ struct WeightInputView: View {
 
     private var isValidWeight: Bool {
         selectedWeight >= weightRange.lowerBound && selectedWeight <= weightRange.upperBound
+    }
+
+    private var formattedWeekday: String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        formatter.dateFormat = "EEEE"
+        return formatter.string(from: selectedDate)
     }
 
     private func setupInitialWeight() {

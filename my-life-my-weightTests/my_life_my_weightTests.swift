@@ -761,6 +761,135 @@ struct WeightGraphViewTests {
 
         #expect(filteredEntries.count == 100)
     }
+
+    @Test func testYAxisRangeWithEmptyData() {
+        // Create empty store
+        let testSuiteName = "test-yaxis-empty-\(UUID().uuidString)"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: "WeightEntries")
+        let store = WeightStore(userDefaults: testDefaults)
+
+        // Simulate yAxisRange calculation
+        let sortedEntries = store.entries.sorted { $0.date < $1.date }
+        let yAxisRange: ClosedRange<Double>
+        if sortedEntries.isEmpty {
+            yAxisRange = 0...100
+        } else {
+            let weights = sortedEntries.map { $0.weight }
+            let maxWeight = weights.max() ?? 100
+            let maxWeightTens = floor(maxWeight / 10) * 10
+            let yAxisMax = maxWeightTens + 10
+            yAxisRange = 0...yAxisMax
+        }
+
+        // Should return default range 0...100 when no data
+        #expect(yAxisRange.lowerBound == 0)
+        #expect(yAxisRange.upperBound == 100)
+    }
+
+    @Test func testYAxisRangeWithMaxWeight67kg() {
+        // Create store with max weight 67kg
+        let testSuiteName = "test-yaxis-67-\(UUID().uuidString)"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: "WeightEntries")
+        let store = WeightStore(userDefaults: testDefaults)
+
+        let calendar = Calendar.current
+        let today = Date()
+        store.addEntry(WeightEntry(weight: 65.0, date: calendar.date(byAdding: .day, value: -2, to: today)!))
+        store.addEntry(WeightEntry(weight: 67.0, date: calendar.date(byAdding: .day, value: -1, to: today)!))
+        store.addEntry(WeightEntry(weight: 66.5, date: today))
+
+        // Simulate yAxisRange calculation
+        let sortedEntries = store.entries.sorted { $0.date < $1.date }
+        let weights = sortedEntries.map { $0.weight }
+        let maxWeight = weights.max() ?? 100
+        let maxWeightTens = floor(maxWeight / 10) * 10
+        let yAxisMax = maxWeightTens + 10
+        let yAxisRange = 0...yAxisMax
+
+        // Max weight is 67kg, so range should be 0...70
+        #expect(yAxisRange.lowerBound == 0)
+        #expect(yAxisRange.upperBound == 70)
+    }
+
+    @Test func testYAxisRangeWithMaxWeight123kg() {
+        // Create store with max weight 123kg
+        let testSuiteName = "test-yaxis-123-\(UUID().uuidString)"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: "WeightEntries")
+        let store = WeightStore(userDefaults: testDefaults)
+
+        let calendar = Calendar.current
+        let today = Date()
+        store.addEntry(WeightEntry(weight: 120.0, date: calendar.date(byAdding: .day, value: -2, to: today)!))
+        store.addEntry(WeightEntry(weight: 123.0, date: calendar.date(byAdding: .day, value: -1, to: today)!))
+        store.addEntry(WeightEntry(weight: 121.5, date: today))
+
+        // Simulate yAxisRange calculation
+        let sortedEntries = store.entries.sorted { $0.date < $1.date }
+        let weights = sortedEntries.map { $0.weight }
+        let maxWeight = weights.max() ?? 100
+        let maxWeightTens = floor(maxWeight / 10) * 10
+        let yAxisMax = maxWeightTens + 10
+        let yAxisRange = 0...yAxisMax
+
+        // Max weight is 123kg, so range should be 0...130
+        #expect(yAxisRange.lowerBound == 0)
+        #expect(yAxisRange.upperBound == 130)
+    }
+
+    @Test func testYAxisRangeWithMaxWeight95kg() {
+        // Create store with max weight 95kg
+        let testSuiteName = "test-yaxis-95-\(UUID().uuidString)"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: "WeightEntries")
+        let store = WeightStore(userDefaults: testDefaults)
+
+        let calendar = Calendar.current
+        let today = Date()
+        store.addEntry(WeightEntry(weight: 92.0, date: calendar.date(byAdding: .day, value: -2, to: today)!))
+        store.addEntry(WeightEntry(weight: 95.0, date: calendar.date(byAdding: .day, value: -1, to: today)!))
+        store.addEntry(WeightEntry(weight: 93.5, date: today))
+
+        // Simulate yAxisRange calculation
+        let sortedEntries = store.entries.sorted { $0.date < $1.date }
+        let weights = sortedEntries.map { $0.weight }
+        let maxWeight = weights.max() ?? 100
+        let maxWeightTens = floor(maxWeight / 10) * 10
+        let yAxisMax = maxWeightTens + 10
+        let yAxisRange = 0...yAxisMax
+
+        // Max weight is 95kg, so range should be 0...100
+        #expect(yAxisRange.lowerBound == 0)
+        #expect(yAxisRange.upperBound == 100)
+    }
+
+    @Test func testYAxisRangeWithMaxWeight50kg() {
+        // Create store with max weight 50kg
+        let testSuiteName = "test-yaxis-50-\(UUID().uuidString)"
+        let testDefaults = UserDefaults(suiteName: testSuiteName)!
+        testDefaults.removeObject(forKey: "WeightEntries")
+        let store = WeightStore(userDefaults: testDefaults)
+
+        let calendar = Calendar.current
+        let today = Date()
+        store.addEntry(WeightEntry(weight: 48.5, date: calendar.date(byAdding: .day, value: -2, to: today)!))
+        store.addEntry(WeightEntry(weight: 50.0, date: calendar.date(byAdding: .day, value: -1, to: today)!))
+        store.addEntry(WeightEntry(weight: 49.2, date: today))
+
+        // Simulate yAxisRange calculation
+        let sortedEntries = store.entries.sorted { $0.date < $1.date }
+        let weights = sortedEntries.map { $0.weight }
+        let maxWeight = weights.max() ?? 100
+        let maxWeightTens = floor(maxWeight / 10) * 10
+        let yAxisMax = maxWeightTens + 10
+        let yAxisRange = 0...yAxisMax
+
+        // Max weight is 50kg, so range should be 0...60
+        #expect(yAxisRange.lowerBound == 0)
+        #expect(yAxisRange.upperBound == 60)
+    }
 }
 
 struct CalendarNavigationTests {

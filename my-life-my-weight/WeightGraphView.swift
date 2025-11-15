@@ -56,11 +56,13 @@ struct WeightGraphView: View {
         guard !sortedEntries.isEmpty else { return 0...100 }
 
         let weights = sortedEntries.map { $0.weight }
-        let minWeight = weights.min() ?? 0
         let maxWeight = weights.max() ?? 100
 
-        let padding = (maxWeight - minWeight) * 0.1
-        return (minWeight - padding)...(maxWeight + padding)
+        // 最大体重の10の位を取得して+10
+        let maxWeightTens = floor(maxWeight / 10) * 10
+        let yAxisMax = maxWeightTens + 10
+
+        return 0...yAxisMax
     }
 
     var body: some View {
